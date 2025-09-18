@@ -1,0 +1,14 @@
+{
+  "name": "preview-manager",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "adm-zip": "^0.5.12",
+    "axios": "^1.7.7",
+    "dockerode": "^4.0.2",
+    "express": "^4.19.2",
+    "nanoid": "^5.0.7",
+    "prom-client": "^15.1.2",
+    "cors": "^2.8.5"
+  }
+}

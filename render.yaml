@@ -1,0 +1,24 @@
+services:
+  - type: web
+    name: one-shot-api
+    env: docker
+    dockerfilePath: services/api/Dockerfile
+    plan: free
+    autoDeploy: false
+    healthCheckPath: /health
+    envVars:
+      - key: JWT_SECRET
+        value: change-me
+      - key: DATABASE_URL
+        fromSecret: true
+      - key: CORS_ORIGINS
+        value: https://your-frontend.example
+  - type: web
+    name: one-shot-web
+    env: docker
+    dockerfilePath: services/web/Dockerfile
+    plan: free
+    autoDeploy: false
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://your-api.example

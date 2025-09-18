@@ -1,0 +1,61 @@
+# AI Platform — Hardened & One-Shot Deploy
+
+This repo contains a minimal, production-ready baseline for:
+- **API** (Fastify + Prisma + Postgres)
+- **Orchestrator** (Express + SSE)
+- **Preview Manager** (ephemeral containers behind Traefik)
+- **IDE** (Next.js, dark colorful dashboard at `/dashboard`)
+- **Collab** (Yjs websocket)
+
+## Quick start (local, Docker)
+
+```bash
+cp .env.example .env
+docker compose up -d --build
+./scripts/smoke.sh
+```
+
+Services via Traefik on `lvh.me`:
+- IDE → http://ide.lvh.me
+- API → http://api.lvh.me
+- Orchestrator → http://orchestrator.lvh.me
+- Preview Manager → http://preview.lvh.me
+
+## Environment
+
+Edit `.env` as needed. Defaults are safe for local dev. Set `DEMO_MODE=false` and a strong `JWT_SECRET` in prod.
+
+## Deploy targets
+
+### Railway / Render
+- Deploy each service using its Dockerfile.
+- Provision **Postgres** and set `DATABASE_URL` in API env.
+- Provision **Redis** if you extend workers.
+- Expose ports per `.env.example` and Traefik is not needed on PaaS (use their routers). For a single-host setup, use the included Traefik.
+
+### Vercel
+- Deploy only `services/ide`.
+- Point `NEXT_PUBLIC_*` to API/Orchestrator/Preview public URLs.
+- Configure NextAuth if using OAuth; otherwise demo mode works without login.
+
+### Ubuntu VM
+```bash
+./scripts/deploy-ubuntu.sh
+```
+
+## Security & hardening
+
+- JWT auth with redacted logs; demo mode user id `1`.
+- Rate-limit on API; Helmet + CORS.
+- No secrets committed; config via env vars.
+- Prometheus metrics and `/health` on all services.
+- Preview containers are ephemeral and network-isolated.
+
+## Smoke test does:
+- API health + token bridge
+- Orchestrator health + SSE stream
+- Preview creation for project 1
+
+## Notes
+- Prisma uses `db push` at build via `npm run build` → generate client. Provide a migration workflow for production if you need schema history.
+- Previews route as `http://p-<id>.<BASE_DOMAIN>/` (Traefik).

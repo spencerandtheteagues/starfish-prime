@@ -1,0 +1,46 @@
+name: Build and Lint
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  node-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+      - name: API deps
+        run: |
+          cd services/api
+          npm ci || npm i
+          npm run generate || true
+      - name: Web build
+        run: |
+          cd services/web
+          npm ci || npm i
+          npm run build
+
+  docker-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-qemu-action@v3
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./services/api
+          tags: oneshot/api:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+      - uses: docker/build-push-action@v6
+        with:
+          context: ./services/web
+          tags: oneshot/web:ci
+          load: true
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
