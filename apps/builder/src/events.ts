@@ -1,0 +1,1 @@
+import { EventEmitter } from 'node:events'; export type AgentEvent={ts:number;runId:string;kind:'status'|'log'|'artifact';step?:'planner'|'architect'|'scaffolder'|'coder'|'tester'|'packer'|'deployer'|'integrator';message?:string;data?:any}; export const bus=new EventEmitter();

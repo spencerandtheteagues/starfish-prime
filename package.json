@@ -1,0 +1,15 @@
+{
+  "name": "personal-ai-app-builder-final",
+  "private": true,
+  "version": "1.0.0",
+  "workspaces": [
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=20 <21"
+  },
+  "scripts": {
+    "build": "npm run -w apps/builder build && npm run -w apps/web build",
+    "typecheck": "npm run -w apps/builder typecheck && npm run -w apps/web typecheck"
+  }
+}

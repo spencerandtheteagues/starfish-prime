@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: builder-api
+    env: node
+    plan: free
+    rootDir: apps/builder
+    buildCommand: npm run build
+    startCommand: node dist/index.js
+    autoDeploy: false
+    envVars:
+      - key: ALLOWED_ORIGINS
+        sync: false
+      - key: OPENAI_API_KEY
+        sync: false
+      - key: SPEC_KIT_CMD
+        sync: false
+      - key: AUTO_FIX
+        sync: false
+      - key: AUTO_FIX_MAX
+        value: "2"
+      - key: PORT
+        value: "4001"
+    healthCheckPath: /health
+  - type: web
+    name: builder-web
+    env: node
+    plan: free
+    rootDir: apps/web
+    buildCommand: npm run build
+    startCommand: npm run start
+    autoDeploy: false
+    envVars:
+      - key: NEXT_PUBLIC_BUILDER_URL
+        fromService:
+          type: web
+          name: builder-api
+          envVarKey: RENDER_EXTERNAL_URL
