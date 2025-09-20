@@ -4,7 +4,7 @@ services:
     env: node
     plan: free
     rootDir: apps/builder
-    buildCommand: npm run build
+    buildCommand: npm install && npm run build
     startCommand: node dist/index.js
     autoDeploy: false
     envVars:
@@ -13,11 +13,23 @@ services:
       - key: OPENAI_API_KEY
         sync: false
       - key: SPEC_KIT_CMD
-        sync: false
+        value: "uvx --from git+https://github.com/github/spec-kit.git specify validate . --output text"
       - key: AUTO_FIX
-        sync: false
+        value: "1"
       - key: AUTO_FIX_MAX
         value: "2"
+      - key: GITHUB_TOKEN
+        sync: false
+      - key: GITHUB_OWNER
+        value: "spencerandtheteagues"
+      - key: GITHUB_REPO
+        value: "starfish-prime"
+      - key: GIT_AUTHOR_NAME
+        value: "Neon Builder"
+      - key: GIT_AUTHOR_EMAIL
+        value: "spencerandtheteagues@gmail.com"
+      - key: DATABASE_URL
+        sync: false
       - key: PORT
         value: "4001"
     healthCheckPath: /health
@@ -26,7 +38,7 @@ services:
     env: node
     plan: free
     rootDir: apps/web
-    buildCommand: npm run build
+    buildCommand: npm install && npm run build
     startCommand: npm run start
     autoDeploy: false
     envVars:
