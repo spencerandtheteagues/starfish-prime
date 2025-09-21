@@ -1,0 +1,27 @@
+{
+  "name": "one-shot-api",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "generate": "prisma generate",
+    "start:otel": "OTEL_TRACING_ENABLED=1 node src/index.js"
+  },
+  "dependencies": {
+    "@fastify/cors": "8.4.2",
+    "@fastify/helmet": "12.4.0",
+    "@fastify/jwt": "7.2.4",
+    "@fastify/rate-limit": "8.0.0",
+    "@fastify/request-id": "6.0.0",
+    "@prisma/client": "5.16.1",
+    "fastify": "4.26.2",
+    "pino": "8.19.0",
+    "prom-client": "14.2.0",
+    "zod": "3.23.8"
+  },
+  "devDependencies": {
+    "prisma": "5.16.1"
+  }
+}

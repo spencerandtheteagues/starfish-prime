@@ -1,0 +1,10 @@
+{
+  "name": "worker",
+  "private": true,
+  "type": "module",
+  "dependencies": {
+    "bullmq": "^5.12.6",
+    "dockerode": "^4.0.2",
+    "ioredis": "^5.4.1"
+  }
+}

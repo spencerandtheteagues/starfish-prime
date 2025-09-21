@@ -1,0 +1,5 @@
+
+## 2025-09-17
+- Hardened CORS allowlist across services via `CORS_ORIGINS`.
+- Added docs: `docs/ARCHITECTURE.md`, `docs/PRD.md`.
+- Preserved smoke flow; Traefik on `lvh.me`; SSE stream stable.

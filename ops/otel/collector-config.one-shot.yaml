@@ -1,0 +1,18 @@
+receivers:
+  prometheus:
+    config:
+      scrape_configs:
+        - job_name: 'one-shot-api'
+          metrics_path: /metrics
+          static_configs:
+            - targets: ['api:4000']
+
+exporters:
+  logging:
+    logLevel: info
+
+service:
+  pipelines:
+    metrics:
+      receivers: [prometheus]
+      exporters: [logging]

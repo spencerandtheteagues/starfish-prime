@@ -1,61 +1,119 @@
-# Personal AI App Builder — Final
-Black + neon mission control that turns a prompt into a full‑stack app, opens a PR, and (optionally) **auto-fixes** failing builds/tests by filing patch commits.
+# One‑Shot Integrated Stack — Hardened
 
-## Features
-- Live event stream; **message** agents mid-run; **cancel** run.
-- **Scaffold**: Next.js web + Fastify API + Prisma schema + Playwright + Vitest.
-- **Next.js rewrites** in generated app to proxy `/api/*` → API service (local + prod).
-- **Download App ZIP** and **Artifacts ZIP** (plan + logs + repo).
-- **Push to GitHub**: init + commit + push + open PR via Octokit.
-- **Spec Kit hook** (optional): run any `SPEC_KIT_CMD` in generated repo, streaming output.
-- **Auto‑Fix loop** (optional): build + tests; on failure, ask an LLM to produce JSON patches, apply, commit, and re-run. Repeat up to `AUTO_FIX_MAX`.
+This is a production‑ready, dockerized stack with:
+- **API** (Fastify + Prisma + Postgres) with JWT auth (access+refresh), CORS, metrics, health, and SSE.
+- **Orchestrator** stub that simulates agent runs with SSE.
+- **Preview Manager** stub that forwards auth headers when proxying to the API.
+- **Web** (Next.js) simple UI talking to the API.
 
-## Quickstart (local)
+## Quick start
+
 ```bash
-npm i
-npm run -w apps/builder dev        # API -> http://localhost:4001
-
-# new terminal
-cd apps/web
-echo 'NEXT_PUBLIC_BUILDER_URL=http://localhost:4001' > .env.local
-npm run dev                        # UI -> http://localhost:3000
+cp .env.example .env
+docker compose up -d --build
+./scripts/smoke.sh
 ```
 
-## Env (builder)
-Copy `FINAL.env.example` and set as needed:
+If the script prints `SMOKE PASS ✅`, your stack is good.
+
+### Service ports
+- API: `:4000`
+- Orchestrator: `:4001`
+- Preview Manager: `:4002`
+- Web: `:3000`
+- Postgres: internal only (`db`)
+
+## Auth model (short)
+- `POST /auth/token` with `{ "userId":"..." }` returns `{ token, refreshToken, expiresIn }`.
+- `POST /auth/refresh` with `{ "refreshToken": "..." }` rotates refresh tokens.
+- `POST /auth/logout` revokes existing refresh tokens for the caller.
+- Authenticated endpoints require `Authorization: Bearer <token>`.
+
+## Health & Metrics
+Each service exposes:
+- `GET /health` → `{ ok: true }`
+- `GET /metrics` → Prometheus format
+
+## Environment
+
+See `.env.example` for all knobs. Key ones:
+
+- `CORS_ORIGINS` — CSV of allowed origins.
+- `JWT_SECRET`, `JWT_ISSUER`, `JWT_AUDIENCE`
+- `REFRESH_TTL` — seconds; refresh token lifetime
+
+### Prisma / database
+Migrations are applied automatically at container startup (`prisma migrate deploy`).
+The default DB is the `db` service (Postgres 16).
+
+---
+
+## Deploy Guides
+
+### Vercel
+- Deploy **Web** on Vercel:
+  - Set `NEXT_PUBLIC_API_URL` to your API base URL.
+  - Build command `npm run build`, Output directory `.next`.
+- Deploy **API, Orchestrator, Preview Manager** on a Docker‑hosted platform (Render/Railway/VM). Vercel is not ideal for long‑lived Node processes with SSE.
+
+### Railway
+- Create a Postgres database.
+- Deploy each service from its Dockerfile.
+- Service vars:
+  - API: `PORT` to Railway’s assigned port, `DATABASE_URL` to Railway Postgres URL, plus JWT/CORS vars.
+  - Orchestrator/Preview: `PORT` to assigned port, `CORS_ORIGINS` to your web origin(s).
+- Add a **health check** path `/health` for each service.
+
+### Render
+- Create a **PostgreSQL** instance.
+- Create **three web services** (API, Orchestrator, Preview Manager) using the respective Dockerfiles.
+- Set environment:
+  - `PORT` injected by Render (use it in each service).
+  - `DATABASE_URL`, `JWT_*`, `CORS_ORIGINS`.
+- Use the `/health` endpoint for health checks.
+- Deploy **Web** using `services/web/Dockerfile`.
+
+### Bare‑metal Ubuntu VM (Docker)
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# re-login
+git clone <your repo>
+cd <repo>
+cp .env.example .env
+docker compose up -d --build
+./scripts/smoke.sh
 ```
-ALLOWED_ORIGINS=http://localhost:3000
-OPENAI_API_KEY=sk-...                   # needed for AUTO_FIX=1 and planner
-SPEC_KIT_CMD=uvx --from git+https://github.com/github/spec-kit.git specify validate .
-AUTO_FIX=1                               # enable the auto-fix loop (optional)
-AUTO_FIX_MAX=2                           # number of fix iterations
 
-# GitHub PR
-GITHUB_TOKEN=...                         # fine-grained PAT with Contents+PRs
-GITHUB_OWNER=your-user-or-org
-GITHUB_REPO=your-repo
-GIT_AUTHOR_NAME=Neon Builder
-GIT_AUTHOR_EMAIL=neon@example.com
-```
+### TLS / Traefik (Local preview)
+See `docker-compose.preview.yml` for a Traefik‑based dev router that maps:
+- `api.lvh.me`, `web.lvh.me`, etc., to local containers.
+Use real certs in production (e.g., Cloudflare, Caddy, or Traefik with Let’s Encrypt).
 
-## Render (free-tier friendly)
-- Keep `render.yaml` at repo root (Blueprint). It sets `rootDir` for monorepo. Import as Blueprint.
-- Enable **PR/Service Previews** so each PR has an ephemeral deployment.
-- WebSockets are over `wss://` via Render’s proxy (we use it automatically).
+---
 
-## Generated App (download)
-- `apps/api`: Fastify CRUD (SAFE_MODE=1 → in-memory; else Prisma Postgres)
-- `apps/web`: Next.js + **rewrites** to proxy `/api` to the API service
-- `prisma/`: inferred schema
-- `.github/workflows/ci.yml`: Vitest + Playwright
+## Security Hardening
 
-## Auto-Fix: how it works
-1. After scaffold (and optional Spec Kit), we run project build/tests inside the repo.
-2. On failure, the builder prompts an LLM to return **JSON patches**:
-   ```json
-   {"files":[{"path":"apps/api/src/index.ts","content":"<new file content>"}]}
-   ```
-3. The builder writes files, commits with `fix: auto patch`, and re-runs. Up to `AUTO_FIX_MAX`.
-4. You can then **Push to GitHub** to open a PR; Render Previews take it from there.
+- **No secrets in code**; use env vars. `.env.example` documents the required keys.
+- **JWT**: signed with `HS256`, issuer/audience set; 15‑min access tokens, rotating refresh tokens.
+- **CORS**: default allows `http://localhost:3000,http://web:3000`. Tighten for prod.
+- **Logging**: Pino with redaction for `authorization`, `password`, `token`.
+- **SSE**: authenticated, connection closes after a short burst in the demo.
+- **Headers**: Preview Manager forwards `Authorization` and `X-User-Id`.
 
-See the /apps/builder/src/fixer.ts for details.
+---
+
+## Scripts
+
+- `./scripts/smoke.sh` — health checks, auth mint/refresh, SSE stream, header‑forward check.
+- `./scripts/deploy-ubuntu.sh` — install Docker (if needed), boot the stack, run smoke.
+
+---
+
+## Troubleshooting
+
+- API won’t start → check `DATABASE_URL` and `JWT_SECRET`.
+- Prisma errors → ensure Postgres is healthy; `docker compose logs db`.
+- CORS blocked in browser → set exact origins in `CORS_ORIGINS`.
+
+PRs welcome. Keep the paranoia dial at 11.

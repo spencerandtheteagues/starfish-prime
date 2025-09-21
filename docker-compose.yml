@@ -1,0 +1,128 @@
+version: "3.9"
+name: "starfish-prime"
+
+networks:
+  starfish-net:
+    driver: bridge
+
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-app}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-app}
+      POSTGRES_DB: ${POSTGRES_DB:-appdb}
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    networks:
+      - starfish-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  api:
+    build:
+      context: ./services/api
+    environment:
+      NODE_ENV: production
+      PORT: ${API_PORT:-4000}
+      DATABASE_URL: ${DATABASE_URL:-postgresql://app:app@db:5432/appdb}
+      JWT_SECRET: ${JWT_SECRET:-change-me-in-prod}
+      JWT_ISSUER: ${JWT_ISSUER:-starfish-prime}
+      JWT_AUDIENCE: ${JWT_AUDIENCE:-starfish-prime-clients}
+      REFRESH_TTL: ${REFRESH_TTL:-604800}
+      DEMO_MODE: ${DEMO_MODE:-true}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://web:3000}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "4000:4000"
+    networks:
+      - starfish-net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').request({host:'localhost', port:4000, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  orchestrator:
+    build:
+      context: ./services/orchestrator
+    environment:
+      NODE_ENV: production
+      PORT: ${ORCHESTRATOR_PORT:-4001}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://web:3000}
+    ports:
+      - "4001:4001"
+    networks:
+      - starfish-net
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').request({host:'localhost', port:4001, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  preview-manager:
+    build:
+      context: ./services/preview-manager
+    environment:
+      NODE_ENV: production
+      PORT: ${PREVIEW_PORT:-4002}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:3000,http://web:3000}
+    ports:
+      - "4002:4002"
+    networks:
+      - starfish-net
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').request({host:'localhost', port:4002, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  collab:
+    build:
+      context: ./services/collab
+    environment:
+      PORT: ${COLLAB_PORT:-1234}
+    ports:
+      - "1234:1234"
+    networks:
+      - starfish-net
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').request({host:'localhost', port:1234, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  web:
+    build:
+      context: ./services/web
+    environment:
+      NODE_ENV: production
+      PORT: ${WEB_PORT:-3000}
+      NEXT_PUBLIC_API_URL: ${NEXT_PUBLIC_API_URL:-http://localhost:4000}
+    ports:
+      - "3000:3000"
+    networks:
+      - starfish-net
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "node", "-e", "require('http').request({host:'localhost', port:3000, path:'/'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+volumes:
+  db_data:

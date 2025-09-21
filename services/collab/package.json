@@ -1,0 +1,12 @@
+{
+  "name": "collab",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js"
+  },
+  "dependencies": {
+    "y-websocket": "^1.5.10",
+    "ws": "^8.17.0"
+  }
+}
