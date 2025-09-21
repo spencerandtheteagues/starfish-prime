@@ -24,4 +24,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD node -e "require('http').request({host:'localhost', port:4000, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
 
 ENTRYPOINT ["/sbin/tini","--"]
-CMD ["sh", "./scripts/start.sh"]
+CMD ["npm", "start"]
