@@ -11,14 +11,18 @@ WORKDIR /app
 RUN apk add --no-cache tini
 RUN addgroup -S app && adduser -S app -G app
 ENV NODE_ENV=production
+# Use Render's PORT env var, fallback to 4002
+ENV PORT=${PORT:-4002}
 COPY --from=deps /app/node_modules ./node_modules
 COPY --chown=app:app . .
 USER app
-EXPOSE 4002 9464
 
-# Healthcheck to ensure the service is running
+# Expose both main port and metrics port
+EXPOSE ${PORT:-4002} 9464
+
+# Healthcheck using PORT env var
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').request({host:'localhost', port:4002, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
+  CMD node -e "const port = process.env.PORT || 4002; require('http').request({host:'localhost', port:port, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["node", "src/index.js"]
+CMD ["npm", "start"]

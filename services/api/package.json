@@ -7,14 +7,14 @@
   "scripts": {
     "start": "node src/index.js",
     "generate": "prisma generate",
+    "migrate": "prisma migrate deploy",
     "start:otel": "OTEL_TRACING_ENABLED=1 node src/index.js"
   },
   "dependencies": {
     "@fastify/cors": "8.4.2",
-    "@fastify/helmet": "12.4.0",
+    "@fastify/helmet": "11.1.1",
     "@fastify/jwt": "7.2.4",
-    "@fastify/rate-limit": "8.0.0",
-    "@fastify/request-id": "6.0.0",
+    "@fastify/rate-limit": "9.1.0",
     "@prisma/client": "5.16.1",
     "fastify": "4.26.2",
     "pino": "8.19.0",
@@ -22,6 +22,7 @@
     "zod": "3.23.8"
   },
   "devDependencies": {
+    "pg": "^8.16.3",
     "prisma": "5.16.1"
   }
 }

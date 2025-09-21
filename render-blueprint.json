@@ -1,0 +1,191 @@
+{
+  "repo": "https://github.com/spencerandtheteagues/starfish-prime.git",
+  "databases": [
+    {
+      "name": "starfish-prime-db",
+      "databaseName": "starfish_prime",
+      "user": "starfish_user",
+      "plan": "free"
+    }
+  ],
+  "services": [
+    {
+      "type": "web",
+      "name": "starfish-prime-api",
+      "env": "docker",
+      "dockerfilePath": "services/api/Dockerfile",
+      "plan": "free",
+      "autoDeploy": true,
+      "healthCheckPath": "/health",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "value": "info"
+        },
+        {
+          "key": "JWT_SECRET",
+          "generateValue": true
+        },
+        {
+          "key": "JWT_ISSUER",
+          "value": "starfish-prime"
+        },
+        {
+          "key": "JWT_AUDIENCE",
+          "value": "starfish-prime-clients"
+        },
+        {
+          "key": "REFRESH_TTL",
+          "value": "604800"
+        },
+        {
+          "key": "DATABASE_URL",
+          "fromDatabase": {
+            "name": "starfish-prime-db",
+            "property": "connectionString"
+          }
+        },
+        {
+          "key": "CORS_ORIGINS",
+          "value": "https://starfish-prime-web.onrender.com,https://starfish-prime-ide.onrender.com"
+        },
+        {
+          "key": "API_PORT",
+          "value": "4000"
+        }
+      ]
+    },
+    {
+      "type": "web",
+      "name": "starfish-prime-web",
+      "env": "docker",
+      "dockerfilePath": "services/web/Dockerfile",
+      "plan": "free",
+      "autoDeploy": true,
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "NEXT_PUBLIC_API_URL",
+          "value": "https://starfish-prime-api.onrender.com"
+        },
+        {
+          "key": "WEB_PORT",
+          "value": "3000"
+        }
+      ]
+    },
+    {
+      "type": "web",
+      "name": "starfish-prime-orchestrator",
+      "env": "docker",
+      "dockerfilePath": "services/orchestrator/Dockerfile",
+      "plan": "free",
+      "autoDeploy": true,
+      "healthCheckPath": "/health",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "value": "info"
+        },
+        {
+          "key": "ORCHESTRATOR_PORT",
+          "value": "4001"
+        },
+        {
+          "key": "CORS_ORIGINS",
+          "value": "https://starfish-prime-web.onrender.com,https://starfish-prime-ide.onrender.com"
+        }
+      ]
+    },
+    {
+      "type": "web",
+      "name": "starfish-prime-preview",
+      "env": "docker",
+      "dockerfilePath": "services/preview-manager/Dockerfile",
+      "plan": "free",
+      "autoDeploy": true,
+      "healthCheckPath": "/health",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "value": "info"
+        },
+        {
+          "key": "PREVIEW_PORT",
+          "value": "4002"
+        },
+        {
+          "key": "CORS_ORIGINS",
+          "value": "https://starfish-prime-web.onrender.com,https://starfish-prime-ide.onrender.com"
+        }
+      ]
+    },
+    {
+      "type": "web",
+      "name": "starfish-prime-ide",
+      "env": "docker",
+      "dockerfilePath": "services/ide/Dockerfile",
+      "plan": "free",
+      "autoDeploy": true,
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "NEXTAUTH_URL",
+          "value": "https://starfish-prime-ide.onrender.com"
+        },
+        {
+          "key": "NEXTAUTH_SECRET",
+          "generateValue": true
+        },
+        {
+          "key": "NEXT_PUBLIC_API_URL",
+          "value": "https://starfish-prime-api.onrender.com"
+        }
+      ]
+    },
+    {
+      "type": "web",
+      "name": "starfish-prime-worker",
+      "env": "docker",
+      "dockerfilePath": "services/worker/Dockerfile",
+      "plan": "free",
+      "autoDeploy": true,
+      "healthCheckPath": "/health",
+      "envVars": [
+        {
+          "key": "NODE_ENV",
+          "value": "production"
+        },
+        {
+          "key": "LOG_LEVEL",
+          "value": "info"
+        },
+        {
+          "key": "DATABASE_URL",
+          "fromDatabase": {
+            "name": "starfish-prime-db",
+            "property": "connectionString"
+          }
+        }
+      ]
+    }
+  ]
+}

@@ -1,24 +1,112 @@
 services:
+  # API Service - Core backend with Prisma + Postgres
   - type: web
-    name: one-shot-api
+    name: starfish-prime-api
     env: docker
     dockerfilePath: services/api/Dockerfile
     plan: free
-    autoDeploy: false
+    autoDeploy: true
     healthCheckPath: /health
     envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
       - key: JWT_SECRET
-        value: change-me
+        generateValue: true
+      - key: JWT_ISSUER
+        value: starfish-prime
+      - key: JWT_AUDIENCE
+        value: starfish-prime-clients
+      - key: REFRESH_TTL
+        value: "604800"
       - key: DATABASE_URL
-        sync: false
+        value: postgresql://neondb_owner:npg_J2fqPGrFNHu1@ep-odd-grass-adpjlbpd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
       - key: CORS_ORIGINS
-        value: https://your-frontend.example
+        value: https://starfish-prime-web.onrender.com,https://starfish-prime-ide.onrender.com
+      - key: API_PORT
+        value: "4000"
+
+  # Web Service - Next.js frontend
   - type: web
-    name: one-shot-web
+    name: starfish-prime-web
     env: docker
     dockerfilePath: services/web/Dockerfile
     plan: free
-    autoDeploy: false
+    autoDeploy: true
     envVars:
+      - key: NODE_ENV
+        value: production
       - key: NEXT_PUBLIC_API_URL
-        value: https://your-api.example
+        value: https://starfish-prime-api.onrender.com
+      - key: WEB_PORT
+        value: "3000"
+
+  # Orchestrator Service - AI Agent orchestration
+  - type: web
+    name: starfish-prime-orchestrator
+    env: docker
+    dockerfilePath: services/orchestrator/Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: ORCHESTRATOR_PORT
+        value: "4001"
+      - key: CORS_ORIGINS
+        value: https://starfish-prime-web.onrender.com,https://starfish-prime-ide.onrender.com
+
+  # Preview Manager Service - Development preview management
+  - type: web
+    name: starfish-prime-preview
+    env: docker
+    dockerfilePath: services/preview-manager/Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: PREVIEW_PORT
+        value: "4002"
+      - key: CORS_ORIGINS
+        value: https://starfish-prime-web.onrender.com,https://starfish-prime-ide.onrender.com
+
+  # IDE Service - Next.js development environment
+  - type: web
+    name: starfish-prime-ide
+    env: docker
+    dockerfilePath: services/ide/Dockerfile
+    plan: free
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NEXTAUTH_URL
+        value: https://starfish-prime-ide.onrender.com
+      - key: NEXTAUTH_SECRET
+        generateValue: true
+      - key: NEXT_PUBLIC_API_URL
+        value: https://starfish-prime-api.onrender.com
+
+  # Worker Service - Background task processing
+  - type: web
+    name: starfish-prime-worker
+    env: docker
+    dockerfilePath: services/worker/Dockerfile
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: LOG_LEVEL
+        value: info
+      - key: DATABASE_URL
+        value: postgresql://neondb_owner:npg_J2fqPGrFNHu1@ep-odd-grass-adpjlbpd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
