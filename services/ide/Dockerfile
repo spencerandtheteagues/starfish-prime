@@ -15,11 +15,11 @@ RUN addgroup -S app && adduser -S app -G app
 ENV NODE_ENV=production
 COPY --from=builder /app .
 USER app
-EXPOSE 3000
+EXPOSE $PORT
 
 # Healthcheck to ensure the service is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').request({host:'localhost', port:3000, path:'/'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
+  CMD node -e "require('http').request({host:'localhost', port:process.env.PORT || 3000, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
 
 ENTRYPOINT ["/sbin/tini", "--"]
-CMD ["npx", "next", "start", "-p", "3000"]
+CMD ["npx", "next", "start", "-p", "${PORT:-3000}"]

@@ -17,11 +17,11 @@ COPY --from=build /app/src ./src
 COPY --from=build /app/prisma ./prisma
 COPY --from=build /app/scripts ./scripts
 COPY --from=build /app/package.json ./
-EXPOSE 4000
+EXPOSE $PORT
 
 # Healthcheck to ensure the service is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').request({host:'localhost', port:4000, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
+  CMD node -e "require('http').request({host:'localhost', port:process.env.PORT || 4000, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
 
 
 # Force a cache break

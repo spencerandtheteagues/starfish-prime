@@ -13,10 +13,10 @@ ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
 COPY --chown=app:app . .
 USER app
-EXPOSE 4002 9464
+EXPOSE $PORT
 
 # Healthcheck to ensure the service is running
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
-  CMD node -e "require('http').request({host:'localhost', port:4002, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
+  CMD node -e "require('http').request({host:'localhost', port:process.env.PORT || 4002, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
 
 CMD ["node", "src/index.js"]
