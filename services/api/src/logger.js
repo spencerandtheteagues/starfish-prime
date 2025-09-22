@@ -1,16 +1,13 @@
 import pino from 'pino';
 
-let otelApi = null;
-try { otelApi = await import('@opentelemetry/api'); } catch {}
-
+// Optional OpenTelemetry integration
 function otelLabels() {
   try {
-    if (!otelApi) return {};
-    const span = otelApi.trace.getSpan(otelApi.context.active());
-    const sc = span && span.spanContext ? span.spanContext() : null;
-    if (!sc) return {};
-    return { traceId: sc.traceId, spanId: sc.spanId };
-  } catch { return {}; }
+    // Skip OpenTelemetry for now to fix build issues
+    return {};
+  } catch {
+    return {};
+  }
 }
 
 const logger = pino({

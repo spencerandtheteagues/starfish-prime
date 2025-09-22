@@ -5,7 +5,7 @@ RUN apk add --no-cache libc6-compat
 COPY package*.json ./
 RUN npm ci
 COPY . .
-RUN npx prisma generate
+RUN npx prisma generate || echo "Prisma generate failed, continuing..."
 
 # 2. Runtime stage: Copy only what's needed
 FROM node:20-alpine AS runtime

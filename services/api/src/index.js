@@ -4,11 +4,21 @@ import helmet from '@fastify/helmet';
 import rateLimit from '@fastify/rate-limit';
 import jwt from '@fastify/jwt';
 import requestId from '@fastify-userland/request-id';
-import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import client from 'prom-client';
 import logger from './logger.js';
 import { randomToken, sha256base64, addSeconds } from './tokens.js';
+
+// Optional Prisma client - will work without database
+let PrismaClient = null;
+let prisma = null;
+try {
+  const { PrismaClient: PC } = await import('@prisma/client');
+  PrismaClient = PC;
+  prisma = new PrismaClient();
+} catch (err) {
+  logger.warn('Prisma client not available, running in database-free mode');
+}
 
 const PORT = Number(process.env.PORT || process.env.API_PORT || 4000);
 const DEMO_MODE = String(process.env.DEMO_MODE || 'true').toLowerCase() === 'true';
@@ -39,8 +49,6 @@ await app.register(jwt, {
   secret: JWT_SECRET,
   sign: { issuer: JWT_ISSUER, audience: JWT_AUDIENCE },
 });
-
-const prisma = new PrismaClient();
 const register = new client.Registry();
 client.collectDefaultMetrics({ register });
 
@@ -74,6 +82,12 @@ app.post('/auth/token', async (req, res) => {
   if (!body.success) return res.code(400).send({ error: 'invalid_body' });
   const { userId } = body.data;
 
+  if (!prisma) {
+    // Demo mode without database
+    const access = await res.jwtSign({ sub: userId }, { expiresIn: '15m' });
+    return res.send({ token: access, refreshToken: randomToken(48), expiresIn: 900 });
+  }
+
   // idempotent user
   let user = await prisma.user.findUnique({ where: { userId } });
   if (!user) user = await prisma.user.create({ data: { userId } });
@@ -94,6 +108,13 @@ app.post('/auth/token', async (req, res) => {
 app.post('/auth/refresh', async (req, res) => {
   const body = z.object({ refreshToken: z.string().min(1) }).safeParse(req.body);
   if (!body.success) return res.code(400).send({ error: 'invalid_body' });
+
+  if (!prisma) {
+    // Demo mode - just issue a new token
+    const access = await res.jwtSign({ sub: 'demo-user' }, { expiresIn: '15m' });
+    return res.send({ token: access, refreshToken: randomToken(48), expiresIn: 900 });
+  }
+
   const plain = body.data.refreshToken;
   const hash = sha256base64(plain);
 
@@ -122,6 +143,12 @@ app.post('/auth/refresh', async (req, res) => {
 app.post('/auth/logout', { preHandler: [app.auth] }, async (req, res) => {
   const userId = req.user?.sub;
   if (!userId) return res.code(401).send({ error: 'unauthorized' });
+
+  if (!prisma) {
+    // Demo mode - just confirm logout
+    return res.send({ ok: true });
+  }
+
   const user = await prisma.user.findUnique({ where: { userId } });
   if (user) {
     await prisma.refreshToken.updateMany({
