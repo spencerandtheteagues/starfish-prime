@@ -29,4 +29,4 @@ HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD node -e "const port = process.env.PORT || 4000; require('http').request({host:'localhost', port:port, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
 
 ENTRYPOINT ["/sbin/tini","--"]
-CMD ["npm", "start"]
+CMD ["sh", "-c", "npx prisma migrate deploy && npm start"]

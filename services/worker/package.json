@@ -9,6 +9,8 @@
   "dependencies": {
     "bullmq": "^5.12.6",
     "dockerode": "^4.0.2",
-    "ioredis": "^5.4.1"
+    "ioredis": "^5.4.1",
+    "express": "^4.19.2",
+    "prom-client": "^15.1.2"
   }
 }

@@ -95,7 +95,7 @@ services:
       - key: NEXT_PUBLIC_API_URL
         value: https://starfish-prime-api.onrender.com
 
-  # Worker Service - Background task processing
+  # Worker Service - Background task processing with HTTP server
   - type: web
     name: starfish-prime-worker
     env: docker
@@ -110,3 +110,5 @@ services:
         value: info
       - key: DATABASE_URL
         value: postgresql://neondb_owner:npg_J2fqPGrFNHu1@ep-odd-grass-adpjlbpd-pooler.c-2.us-east-1.aws.neon.tech/neondb?sslmode=require
+      - key: REDIS_URL
+        value: redis://localhost:6379
