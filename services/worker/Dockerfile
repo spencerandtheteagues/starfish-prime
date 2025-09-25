@@ -8,6 +8,7 @@ RUN npm ci
 # 2. Runner stage: Copy only what's needed
 FROM node:20-alpine AS runner
 WORKDIR /app
+RUN apk add --no-cache tini
 RUN addgroup -S app && adduser -S app -G app
 ENV NODE_ENV=production
 COPY --from=deps /app/node_modules ./node_modules
@@ -19,4 +20,5 @@ EXPOSE $PORT
 HEALTHCHECK --interval=30s --timeout=10s --start-period=5s --retries=3 \
   CMD node -e "require('http').request({host:'localhost', port:process.env.PORT || 4002, path:'/health'}, res => process.exit(res.statusCode == 200 ? 0 : 1)).end()"
 
+ENTRYPOINT ["/sbin/tini", "--"]
 CMD ["node", "src/index.js"]
