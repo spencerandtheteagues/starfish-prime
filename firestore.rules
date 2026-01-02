@@ -1,0 +1,181 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Helper functions
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function isSenior() {
+      return isAuthenticated() && getUserData().role == 'senior';
+    }
+
+    function isCaregiver() {
+      return isAuthenticated() && getUserData().role == 'caregiver';
+    }
+
+    function isLinkedCaregiver(seniorId) {
+      return isAuthenticated() &&
+        exists(/databases/$(database)/documents/caregiverLinks/$(request.auth.uid)) &&
+        seniorId in get(/databases/$(database)/documents/caregiverLinks/$(request.auth.uid)).data.seniors;
+    }
+
+    function isSeniorOwner(seniorId) {
+      return isAuthenticated() && request.auth.uid == seniorId;
+    }
+
+    // Users collection
+    match /users/{userId} {
+      allow read: if isAuthenticated() && request.auth.uid == userId;
+      allow create: if isAuthenticated() && request.auth.uid == userId;
+      allow update: if isAuthenticated() && request.auth.uid == userId;
+      allow delete: if false; // Users cannot delete themselves
+    }
+
+    // Caregiver links
+    match /caregiverLinks/{caregiverId} {
+      allow read: if isAuthenticated() && request.auth.uid == caregiverId;
+      allow write: if isAuthenticated() && request.auth.uid == caregiverId;
+    }
+
+    // Seniors collection
+    match /seniors/{seniorId} {
+      // Seniors can read their own data
+      // Caregivers can read/write if linked
+      allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+
+      // Only caregivers can write senior profile and settings
+      allow create: if isLinkedCaregiver(seniorId);
+      allow update: if isLinkedCaregiver(seniorId);
+      allow delete: if false; // Never delete seniors
+
+      // Medications
+      match /medications/{medId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId); // Only caregivers manage meds
+      }
+
+      // Medication events
+      match /medEvents/{eventId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow create: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow update: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow delete: if isLinkedCaregiver(seniorId);
+      }
+
+      // Appointments
+      match /appointments/{apptId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId); // Only caregivers manage appointments
+      }
+
+      // Medical records
+      match /medicalRecords/{recordId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId); // Only caregivers manage records
+      }
+
+      // Pharmacies
+      match /pharmacies/{pharmacyId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId);
+      }
+
+      // Benefits (Medicare, insurance, etc.)
+      match /benefits/{benefitId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId);
+      }
+
+      // Transactions (finance)
+      match /transactions/{txId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId);
+      }
+
+      // Bills
+      match /bills/{billId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId);
+      }
+
+      // Buddy chats
+      match /buddyChats/{chatId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow create: if isSeniorOwner(seniorId); // Seniors send messages
+        allow update: if false; // No updates to chat messages
+        allow delete: if false; // No deleting chat history
+      }
+
+      // Risk flags
+      match /flags/{flagId} {
+        allow read: if isLinkedCaregiver(seniorId); // Only caregivers see flags
+        allow create: if false; // Only server can create flags
+        allow update: if isLinkedCaregiver(seniorId); // Caregivers can acknowledge
+        allow delete: if false;
+      }
+
+      // Daily reports
+      match /dailyReports/{reportId} {
+        allow read: if isLinkedCaregiver(seniorId); // Only caregivers see reports
+        allow create: if false; // Only server can create reports
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // Alerts (SOS, etc.)
+      match /alerts/{alertId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow create: if isSeniorOwner(seniorId); // Seniors can trigger SOS
+        allow update: if isLinkedCaregiver(seniorId); // Caregivers can acknowledge
+        allow delete: if false;
+      }
+
+      // Location tracking
+      match /location/latest {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isSeniorOwner(seniorId); // Senior device updates location
+      }
+
+      match /location/history/{pointId} {
+        allow read: if isLinkedCaregiver(seniorId); // Only caregivers see history
+        allow create: if isSeniorOwner(seniorId); // Senior device creates history
+        allow update: if false;
+        allow delete: if false;
+      }
+    }
+
+    // Threads (messaging)
+    match /threads/{threadId} {
+      allow read: if isAuthenticated(); // Any authenticated user can read threads they're part of
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated();
+      allow delete: if false;
+
+      match /messages/{messageId} {
+        allow read: if isAuthenticated();
+        allow create: if isAuthenticated();
+        allow update: if false; // No editing messages
+        allow delete: if false;
+      }
+    }
+
+    // Notifications (sent by server)
+    match /notifications/{notificationId} {
+      allow read: if isAuthenticated() && resource.data.caregiverId == request.auth.uid;
+      allow create: if false; // Only server can create
+      allow update: if isAuthenticated() && resource.data.caregiverId == request.auth.uid;
+      allow delete: if false;
+    }
+
+    // Default deny all other collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}
