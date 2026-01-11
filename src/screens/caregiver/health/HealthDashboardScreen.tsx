@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, StyleSheet, Alert } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
 import { CaregiverStackParamList, HealthLog, HealthLogType } from '../../../types';
@@ -15,6 +15,7 @@ import { formatDate } from '../../../utils/date';
 import { FamilyColors } from '../../../design/colors';
 import EmptyState from '../../../components/common/EmptyState';
 import LoadingSpinner from '../../../components/common/LoadingSpinner';
+import AddHealthLogModal from '../../../components/health/AddHealthLogModal';
 
 type HealthDashboardScreenProps = {
   navigation: StackNavigationProp<CaregiverStackParamList, 'HealthDashboard'>;
@@ -35,6 +36,8 @@ const HealthDashboardScreen: React.FC<HealthDashboardScreenProps> = ({ navigatio
   const { senior } = useSeniorProfile(user?.activeSeniorId);
   const [recentLogs, setRecentLogs] = useState<HealthLog[]>([]);
   const [loading, setLoading] = useState(true);
+  const [modalVisible, setModalVisible] = useState(false);
+  const [selectedType, setSelectedType] = useState<HealthLogType>('blood_pressure');
 
   const seniorName = senior?.profile?.name || 'Senior';
 
@@ -98,8 +101,16 @@ const HealthDashboardScreen: React.FC<HealthDashboardScreenProps> = ({ navigatio
   };
 
   const handleAddLog = (type: HealthLogType) => {
-    // TODO: Show modal or navigate to add health log screen
-    Alert.alert('Add Health Log', `Add ${type} will be implemented`);
+    setSelectedType(type);
+    setModalVisible(true);
+  };
+
+  const handleModalClose = () => {
+    setModalVisible(false);
+  };
+
+  const handleModalSuccess = () => {
+    // Modal will close automatically, logs will refresh via subscription
   };
 
   if (loading) {
@@ -175,6 +186,17 @@ const HealthDashboardScreen: React.FC<HealthDashboardScreenProps> = ({ navigatio
           </View>
         )}
       </ScrollView>
+
+      {/* Add Health Log Modal */}
+      {user?.activeSeniorId && (
+        <AddHealthLogModal
+          visible={modalVisible}
+          type={selectedType}
+          seniorId={user.activeSeniorId}
+          onClose={handleModalClose}
+          onSuccess={handleModalSuccess}
+        />
+      )}
     </SafeAreaView>
   );
 };

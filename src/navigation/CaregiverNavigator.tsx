@@ -34,6 +34,10 @@ import ChatThreadScreen from '../screens/caregiver/messaging/ChatThreadScreen';
 
 // Settings
 import CaregiverSettingsScreen from '../screens/caregiver/settings/CaregiverSettingsScreen';
+import EditSeniorProfileScreen from '../screens/caregiver/settings/EditSeniorProfileScreen';
+import CognitiveSettingsScreen from '../screens/caregiver/settings/CognitiveSettingsScreen';
+import NotificationSettingsScreen from '../screens/caregiver/settings/NotificationSettingsScreen';
+import PrivacySettingsScreen from '../screens/caregiver/settings/PrivacySettingsScreen';
 
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
@@ -80,6 +84,10 @@ const MessagesStack = () => (
 const SettingsStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="SettingsHome" component={CaregiverSettingsScreen} />
+    <Stack.Screen name="SeniorProfileEdit" component={EditSeniorProfileScreen} />
+    <Stack.Screen name="CognitiveSettings" component={CognitiveSettingsScreen} />
+    <Stack.Screen name="NotificationSettings" component={NotificationSettingsScreen} />
+    <Stack.Screen name="PrivacySettings" component={PrivacySettingsScreen} />
   </Stack.Navigator>
 );
 

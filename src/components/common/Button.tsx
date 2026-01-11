@@ -11,8 +11,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { buttonStyles } from '../../../design/family-app-styles';
-import { FamilyColors } from '../../../design/colors';
+import { buttonStyles } from '../../design/family-app-styles';
+import { FamilyColors } from '../../design/colors';
 
 interface ButtonProps {
   title: string;

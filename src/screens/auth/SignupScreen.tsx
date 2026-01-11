@@ -39,7 +39,7 @@ const SignupScreen: React.FC<SignupScreenProps> = ({ navigation }) => {
     }
 
     const passwordValidation = validatePassword(password);
-    if (!passwordValidation.isValid) {
+    if (!passwordValidation.valid) {
       Alert.alert('Invalid Password', passwordValidation.errors.join('\n'));
       return;
     }

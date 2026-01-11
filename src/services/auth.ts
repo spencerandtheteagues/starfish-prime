@@ -27,12 +27,18 @@ export const signUpWithEmail = async (
   role: UserRole
 ): Promise<User> => {
   try {
+    console.log('Starting signup process...');
+
     // Create auth user
+    console.log('Creating Firebase Auth user...');
     const userCredential = await firebaseAuth.createUserWithEmailAndPassword(email, password);
     const { uid } = userCredential.user;
+    console.log('Auth user created with UID:', uid);
 
     // Update display name
+    console.log('Updating profile...');
     await userCredential.user.updateProfile({ displayName: name });
+    console.log('Profile updated');
 
     // Create user document
     const userData: Omit<User, 'uid'> = {
@@ -42,10 +48,15 @@ export const signUpWithEmail = async (
       createdAt: new Date(),
     };
 
+    console.log('Creating Firestore user document...');
+    console.log('User data:', userData);
+
     await userDoc(uid).set({
       ...userData,
       createdAt: serverTimestamp(),
     });
+
+    console.log('User document created successfully!');
 
     return {
       uid,
@@ -53,6 +64,8 @@ export const signUpWithEmail = async (
     };
   } catch (error: any) {
     console.error('Sign up error:', error);
+    console.error('Error code:', error.code);
+    console.error('Error message:', error.message);
     throw new Error(error.message || 'Failed to create account');
   }
 };

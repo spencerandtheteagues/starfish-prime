@@ -71,12 +71,15 @@ target 'ElderCare' do
       end
     end
 
-    # Fix for gRPC-Core and gRPC-C++ compilation issues with Xcode 26+
+    # Fix for BoringSSL-GRPC unsupported option -G
     installer.pods_project.targets.each do |target|
-      target.build_configurations.each do |config|
-        if target.name == 'gRPC-Core' || target.name == 'gRPC-C++'
-          config.build_settings['WARNING_CFLAGS'] ||= ['$(inherited)']
-          config.build_settings['WARNING_CFLAGS'] << '-Wno-error=missing-template-arg-list-after-template-kw'
+      if target.name == 'BoringSSL-GRPC'
+        target.source_build_phase.files.each do |file|
+          if file.settings && file.settings['COMPILER_FLAGS']
+            flags = file.settings['COMPILER_FLAGS'].split
+            flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
+            file.settings['COMPILER_FLAGS'] = flags.join(' ')
+          end
         end
       end
     end

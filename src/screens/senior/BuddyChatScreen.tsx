@@ -13,6 +13,7 @@ import { useCurrentUser } from '../../state/useCurrentUser';
 import { useSeniorProfile } from '../../state/useSeniorProfile';
 import { speakBuddyMessage, stop as stopTTS } from '../../services/tts';
 import { chatWithBuddy, convertToAnthropicMessages } from '../../services/buddy';
+import BuddyAvatar, { BuddyEmotion } from '../../components/BuddyAvatar';
 
 type BuddyChatScreenProps = {
   navigation: StackNavigationProp<SeniorStackParamList, 'BuddyChat'>;
@@ -23,6 +24,7 @@ interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   timestamp: Date;
+  tone?: string;
 }
 
 const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
@@ -32,6 +34,7 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [currentEmotion, setCurrentEmotion] = useState<BuddyEmotion>('NEUTRAL');
   const scrollViewRef = useRef<ScrollView>(null);
 
   const fontScale = senior?.preferences?.fontScale || 1.2;
@@ -43,10 +46,33 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
     // Initial greeting from Buddy
     if (messages.length === 0) {
       const greeting = getGreeting();
-      addBuddyMessage(greeting);
+      addBuddyMessage(greeting, 'cheerful');
       speakBuddyMessage(greeting, voiceRate);
     }
   }, []);
+
+  const mapToneToEmotion = (tone?: string): BuddyEmotion => {
+    switch (tone?.toLowerCase()) {
+      case 'cheerful':
+      case 'happy':
+        return 'HAPPY';
+      case 'sad':
+      case 'empathetic':
+        return 'SAD';
+      case 'stern':
+      case 'angry':
+        return 'ANGRY';
+      case 'smug':
+      case 'confident':
+        return 'SMUG';
+      case 'surprised':
+        return 'SURPRISED';
+      case 'thinking':
+        return 'THINKING';
+      default:
+        return 'NEUTRAL';
+    }
+  };
 
   const getGreeting = (): string => {
     const hour = new Date().getHours();
@@ -65,14 +91,16 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
     return greetings[Math.floor(Math.random() * greetings.length)];
   };
 
-  const addBuddyMessage = (content: string) => {
+  const addBuddyMessage = (content: string, tone: string = 'neutral') => {
     const message: ChatMessage = {
       id: Date.now().toString(),
       role: 'assistant',
       content,
       timestamp: new Date(),
+      tone,
     };
     setMessages((prev) => [...prev, message]);
+    setCurrentEmotion(mapToneToEmotion(tone));
     setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
@@ -84,13 +112,13 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
       timestamp: new Date(),
     };
     setMessages((prev) => [...prev, message]);
+    setCurrentEmotion('NEUTRAL');
     setTimeout(() => scrollViewRef.current?.scrollToEnd({ animated: true }), 100);
   };
 
   const handleStartListening = async () => {
-    // TODO: Implement voice recording with expo-av or react-native-voice
-    // For now, show a placeholder alert
     setIsListening(true);
+    setCurrentEmotion('NEUTRAL');
 
     Alert.alert(
       'Voice Input',
@@ -106,7 +134,6 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
 
   const handleStopListening = () => {
     setIsListening(false);
-    // TODO: Process voice recording, convert to text, send to Buddy AI
   };
 
   const handleQuickMessage = async (message: string) => {
@@ -117,16 +144,16 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
 
     addUserMessage(message);
     setIsProcessing(true);
+    setCurrentEmotion('THINKING');
 
     try {
-      // Convert messages to Anthropic format
       const conversationHistory = convertToAnthropicMessages(
         messages.map((m) => ({ role: m.role, content: m.content }))
       );
 
-      // Call Claude API
       const result = await chatWithBuddy({
         seniorId: user.activeSeniorId,
+        caregiverId: senior?.primaryCaregiverUserId || user?.uid || '',
         seniorProfile: senior,
         userName: firstName,
         message,
@@ -134,7 +161,7 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
       });
 
       setIsProcessing(false);
-      addBuddyMessage(result.response);
+      addBuddyMessage(result.response, result.tone || 'neutral');
 
       // Speak the response
       setIsSpeaking(true);
@@ -144,6 +171,7 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
     } catch (error) {
       console.error('Error getting Buddy response:', error);
       setIsProcessing(false);
+      setCurrentEmotion('SAD');
       Alert.alert('Error', 'Could not reach your Buddy. Please try again.');
     }
   };
@@ -168,7 +196,12 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
           <Icon name="arrow-left" size={40} color="#111827" />
         </TouchableOpacity>
         <View style={styles.headerTitle}>
-          <Icon name="robot" size={40} color="#7C3AED" />
+          <BuddyAvatar 
+            emotion={currentEmotion} 
+            isSpeaking={isSpeaking} 
+            isProcessing={isProcessing}
+            size={80}
+          />
           <Text style={[styles.title, { fontSize: 36 * fontScale }]}>
             Buddy
           </Text>
@@ -195,7 +228,11 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
             ]}
           >
             {message.role === 'assistant' && (
-              <Icon name="robot" size={40} color="#7C3AED" style={styles.avatar} />
+              <BuddyAvatar 
+                emotion={mapToneToEmotion(message.tone)} 
+                isSpeaking={false} 
+                size={50}
+              />
             )}
             <View
               style={[
@@ -221,7 +258,7 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
 
         {isProcessing && (
           <View style={styles.processingRow}>
-            <Icon name="robot" size={40} color="#7C3AED" style={styles.avatar} />
+            <BuddyAvatar emotion="THINKING" isSpeaking={false} isProcessing={true} size={50} />
             <View style={styles.processingBubble}>
               <Text style={[styles.processingText, { fontSize: 24 * fontScale }]}>
                 Thinking...
@@ -230,6 +267,18 @@ const BuddyChatScreen: React.FC<BuddyChatScreenProps> = ({ navigation }) => {
           </View>
         )}
       </ScrollView>
+
+      {/* Hero Avatar (When not much chat is happening) */}
+      {messages.length < 3 && !isProcessing && (
+        <View style={styles.heroAvatarContainer}>
+          <BuddyAvatar 
+            emotion={currentEmotion} 
+            isSpeaking={isSpeaking} 
+            isProcessing={isProcessing}
+            size={300}
+          />
+        </View>
+      )}
 
       {/* Quick Messages */}
       {!isListening && !isSpeaking && messages.length <= 2 && (
@@ -453,6 +502,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
     marginLeft: 12,
+  },
+  heroAvatarContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    paddingBottom: 200,
   },
 });
 

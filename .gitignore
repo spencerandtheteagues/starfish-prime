@@ -40,3 +40,4 @@ google-services.json
 # Logs
 logs/
 *.log
+functions/service-account.json

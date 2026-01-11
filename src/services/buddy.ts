@@ -38,6 +38,7 @@ export async function chatWithBuddy(params: {
   conversationHistory?: Array<{ role: 'user' | 'assistant'; content: string }>;
 }): Promise<{
   response: string;
+  tone?: string;
   flags?: RiskFlag[];
   actions?: BuddyAction[];
 }> {
@@ -60,12 +61,14 @@ export async function chatWithBuddy(params: {
 
     const data = result.data as {
       reply: string;
+      tone?: string;
       flags: RiskFlag[];
       actions: BuddyAction[];
     };
 
     return {
       response: data.reply,
+      tone: data.tone,
       flags: data.flags.length > 0 ? data.flags : undefined,
       actions: data.actions.length > 0 ? data.actions : undefined,
     };
@@ -73,4 +76,17 @@ export async function chatWithBuddy(params: {
     console.error('Error in chatWithBuddy:', error);
     throw error;
   }
+}
+
+/**
+ * Convert conversation messages to Anthropic API format
+ * Ensures role types are strictly 'user' or 'assistant'
+ */
+export function convertToAnthropicMessages(
+  messages: Array<{ role: string; content: string }>
+): Array<{ role: 'user' | 'assistant'; content: string }> {
+  return messages.map((msg) => ({
+    role: msg.role === 'user' ? 'user' : 'assistant',
+    content: msg.content,
+  }));
 }

@@ -49,9 +49,9 @@ service cloud.firestore {
       // Caregivers can read/write if linked
       allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
 
-      // Only caregivers can write senior profile and settings
-      allow create: if isLinkedCaregiver(seniorId);
-      allow update: if isLinkedCaregiver(seniorId);
+      // Seniors can create their own profile, any caregiver can create profiles
+      allow create: if isAuthenticated() && (request.auth.uid == seniorId || isCaregiver());
+      allow update: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
       allow delete: if false; // Never delete seniors
 
       // Medications
@@ -147,6 +147,42 @@ service cloud.firestore {
         allow create: if isSeniorOwner(seniorId); // Senior device creates history
         allow update: if false;
         allow delete: if false;
+      }
+
+      // AI Buddy logs
+      match /logs/{logId} {
+        allow read: if isLinkedCaregiver(seniorId);
+        allow create: if false; // Only server creates logs
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // AI Buddy reports
+      match /reports/{reportId} {
+        allow read: if isLinkedCaregiver(seniorId);
+        allow create: if false; // Only server creates reports
+        allow update: if false;
+        allow delete: if false;
+      }
+
+      // AI Buddy memory
+      match /memory/{memoryId} {
+        allow read: if isLinkedCaregiver(seniorId);
+        allow create: if false; // Only server creates memory
+        allow update: if false;
+        allow delete: if isLinkedCaregiver(seniorId); // Caregiver can delete sensitive memories
+      }
+
+      // Avoidance rules (blocked topics)
+      match /avoidanceRules/{ruleId} {
+        allow read: if isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId);
+      }
+
+      // Reminders
+      match /reminders/{remId} {
+        allow read: if isSeniorOwner(seniorId) || isLinkedCaregiver(seniorId);
+        allow write: if isLinkedCaregiver(seniorId);
       }
     }
 

@@ -4,8 +4,8 @@
 
 import React from 'react';
 import { View, ActivityIndicator, Text } from 'react-native';
-import { stateStyles } from '../../../design/family-app-styles';
-import { FamilyColors } from '../../../design/colors';
+import { stateStyles } from '../../design/family-app-styles';
+import { FamilyColors } from '../../design/colors';
 
 interface LoadingSpinnerProps {
   message?: string;

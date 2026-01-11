@@ -5,10 +5,11 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, StyleSheet } from 'react-native';
+import { View, Text, SafeAreaView, ScrollView, TouchableOpacity, StyleSheet, Dimensions } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import { RouteProp } from '@react-navigation/native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
+import { LineChart } from 'react-native-chart-kit';
 import { CaregiverStackParamList, HealthLog, HealthLogType } from '../../../types';
 import { useCurrentUser } from '../../../state/useCurrentUser';
 import { healthLogsCollection } from '../../../services/firebase';
@@ -35,6 +36,15 @@ const HealthChartsScreen: React.FC<HealthChartsScreenProps> = ({ navigation, rou
     glucose: 'Blood Glucose',
     temperature: 'Temperature',
     oxygen: 'Oxygen Level',
+  };
+
+  const metricColors: Record<HealthLogType, string> = {
+    blood_pressure: '#DC2626',
+    weight: '#7C3AED',
+    heart_rate: '#EF4444',
+    glucose: '#F59E0B',
+    temperature: '#3B82F6',
+    oxygen: '#10B981',
   };
 
   useEffect(() => {
@@ -82,6 +92,38 @@ const HealthChartsScreen: React.FC<HealthChartsScreenProps> = ({ navigation, rou
     return `${value} ${logs[0]?.unit || ''}`;
   };
 
+  const prepareChartData = () => {
+    if (logs.length === 0) {
+      return { labels: [], datasets: [{ data: [0] }] };
+    }
+
+    // Reverse logs to show chronologically (oldest to newest)
+    const sortedLogs = [...logs].reverse();
+
+    // Limit to max 10 data points for readability
+    const maxPoints = 10;
+    const step = Math.ceil(sortedLogs.length / maxPoints);
+    const sampledLogs = sortedLogs.filter((_, index) => index % step === 0).slice(0, maxPoints);
+
+    const labels = sampledLogs.map((log) => {
+      const date = new Date(log.timestamp);
+      return `${date.getMonth() + 1}/${date.getDate()}`;
+    });
+
+    const data = sampledLogs.map((log) => {
+      if (type === 'blood_pressure') {
+        // Use systolic value for blood pressure
+        return parseInt(log.value.systolic, 10);
+      }
+      return typeof log.value === 'number' ? log.value : parseFloat(log.value);
+    });
+
+    return {
+      labels,
+      datasets: [{ data, color: (opacity = 1) => metricColors[type] }],
+    };
+  };
+
   if (loading) {
     return <LoadingSpinner />;
   }
@@ -113,13 +155,41 @@ const HealthChartsScreen: React.FC<HealthChartsScreenProps> = ({ navigation, rou
       </View>
 
       <ScrollView contentContainerStyle={styles.content}>
-        {/* Chart Placeholder */}
-        <View style={styles.chartPlaceholder}>
-          <Icon name="chart-line" size={64} color={FamilyColors.gray[400]} />
-          <Text style={styles.chartPlaceholderText}>
-            Chart visualization will be implemented with react-native-chart-kit
-          </Text>
-        </View>
+        {/* Chart */}
+        {logs.length > 0 ? (
+          <View style={styles.chartContainer}>
+            <LineChart
+              data={prepareChartData()}
+              width={Dimensions.get('window').width - 40}
+              height={220}
+              chartConfig={{
+                backgroundColor: FamilyColors.surface,
+                backgroundGradientFrom: FamilyColors.surface,
+                backgroundGradientTo: FamilyColors.surface,
+                decimalPlaces: 0,
+                color: (opacity = 1) => metricColors[type],
+                labelColor: (opacity = 1) => FamilyColors.gray[600],
+                style: {
+                  borderRadius: 16,
+                },
+                propsForDots: {
+                  r: '6',
+                  strokeWidth: '2',
+                  stroke: metricColors[type],
+                },
+              }}
+              bezier
+              style={styles.chart}
+            />
+          </View>
+        ) : (
+          <View style={styles.chartPlaceholder}>
+            <Icon name="chart-line" size={64} color={FamilyColors.gray[400]} />
+            <Text style={styles.chartPlaceholderText}>
+              No data available for the selected time range
+            </Text>
+          </View>
+        )}
 
         {/* Statistics */}
         {logs.length > 0 && (
@@ -211,6 +281,18 @@ const styles = StyleSheet.create({
   },
   content: {
     padding: 20,
+  },
+  chartContainer: {
+    backgroundColor: FamilyColors.surface,
+    borderRadius: 16,
+    padding: 16,
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: FamilyColors.border.default,
+  },
+  chart: {
+    marginVertical: 8,
+    borderRadius: 16,
   },
   chartPlaceholder: {
     backgroundColor: FamilyColors.surface,

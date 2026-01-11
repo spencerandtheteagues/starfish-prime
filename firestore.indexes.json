@@ -15,26 +15,6 @@
       ]
     },
     {
-      "collectionGroup": "appointments",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "dateTime",
-          "order": "ASCENDING"
-        }
-      ]
-    },
-    {
-      "collectionGroup": "buddyChats",
-      "queryScope": "COLLECTION",
-      "fields": [
-        {
-          "fieldPath": "timestamp",
-          "order": "DESCENDING"
-        }
-      ]
-    },
-    {
       "collectionGroup": "flags",
       "queryScope": "COLLECTION",
       "fields": [
@@ -49,22 +29,44 @@
       ]
     },
     {
-      "collectionGroup": "messages",
+      "collectionGroup": "reports",
       "queryScope": "COLLECTION",
       "fields": [
         {
-          "fieldPath": "createdAt",
+          "fieldPath": "type",
           "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "periodStart",
+          "order": "DESCENDING"
         }
       ]
     },
     {
-      "collectionGroup": "location",
-      "queryScope": "COLLECTION_GROUP",
+      "collectionGroup": "alerts",
+      "queryScope": "COLLECTION",
       "fields": [
+        {
+          "fieldPath": "acknowledged",
+          "order": "ASCENDING"
+        },
         {
           "fieldPath": "timestamp",
           "order": "DESCENDING"
+        }
+      ]
+    },
+    {
+      "collectionGroup": "reminders",
+      "queryScope": "COLLECTION",
+      "fields": [
+        {
+          "fieldPath": "enabled",
+          "order": "ASCENDING"
+        },
+        {
+          "fieldPath": "schedule",
+          "order": "ASCENDING"
         }
       ]
     }

@@ -5,7 +5,7 @@
 import React from 'react';
 import { View, Text } from 'react-native';
 import Icon from 'react-native-vector-icons/MaterialCommunityIcons';
-import { stateStyles } from '../../../design/family-app-styles';
+import { stateStyles } from '../../design/family-app-styles';
 import Button from './Button';
 
 interface EmptyStateProps {

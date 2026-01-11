@@ -36,12 +36,39 @@ export interface SeniorProfile {
     name: string;
     dob?: string;
     address?: string;
+    preferredAddress?: string; // e.g., "Joe" instead of "Joseph"
+    timeZone?: string; // IANA timezone
   };
 
   cognitive: {
     level: CognitiveLevel;
     tone: Tone;
     customToneNotes?: string;
+    cognitiveBand?: 'A' | 'B' | 'C' | 'D'; // For integration package compatibility
+  };
+
+  // Subscription and product mode
+  subscriptionMode?: 'BASIC' | 'BUDDY_PLUS';
+
+  // AI configuration
+  aiConfig?: {
+    provider?: 'anthropic' | 'openai' | 'google' | 'gemini'; // AI model provider
+    model?: string; // Specific model version (optional)
+  };
+
+  // Security settings
+  security?: {
+    caregiverPin?: string;
+  };
+
+  // Caregiver guardrails (for Privacy Settings Screen)
+  caregiverGuardrails?: {
+    allowedTopics: string[];
+    blockedTopics: string[];
+    avoidanceStyle: 'gentle_redirect' | 'strict_refusal';
+    privacyMode: 'full_excerpt' | 'summary_only';
+    escalationTriggers: string[];
+    autoNotify: boolean;
   };
 
   autonomyFlags: {
@@ -55,6 +82,16 @@ export interface SeniorProfile {
     highContrast: boolean;
     voiceRate: number; // 0.8–1.2
     quietHours: { start: string; end: string }; // e.g., "21:00", "07:00"
+    sharedRoomMode?: boolean; // For privacy in shared living spaces
+    // Notification preferences
+    notifications?: {
+      medicationReminders: boolean;
+      missedMedications: boolean;
+      appointments: boolean;
+      healthAlerts: boolean;
+      messages: boolean;
+      sosAlerts: boolean; // Always true, but included for UI
+    };
   };
 
   deviceStatus: {
@@ -67,6 +104,9 @@ export interface SeniorProfile {
     };
     batteryPct?: number;
   };
+
+  // Logging configuration
+  loggingLevel?: 0 | 1 | 2 | 3;
 }
 
 // ============================================================================
@@ -368,4 +408,6 @@ export type CaregiverStackParamList = {
   CaregiverSettings: undefined;
   SeniorProfileEdit: undefined;
   CognitiveSettings: undefined;
+  NotificationSettings: undefined;
+  PrivacySettings: undefined;
 };

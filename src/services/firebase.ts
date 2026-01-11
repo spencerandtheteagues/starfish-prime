@@ -17,6 +17,18 @@ export const firebaseFirestore = firestore();
 export const firebaseMessaging = messaging();
 export const firebaseFunctions = functions();
 
+// Uncomment the following lines to use Firebase Emulator
+// if (__DEV__) {
+//   try {
+//     console.log('Connecting to Firebase Emulator...');
+//     firebaseAuth.useEmulator('http://localhost:9099');
+//     firebaseFirestore.useEmulator('localhost', 8080);
+//     firebaseFunctions.useEmulator('localhost', 5001);
+//   } catch (e) {
+//     console.error('Failed to connect to Firebase Emulator:', e);
+//   }
+// }
+
 // ============================================================================
 // COLLECTION REFERENCES
 // ============================================================================

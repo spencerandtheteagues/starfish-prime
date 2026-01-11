@@ -12,8 +12,8 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { inputStyles } from '../../../design/family-app-styles';
-import { FamilyColors } from '../../../design/colors';
+import { inputStyles } from '../../design/family-app-styles';
+import { FamilyColors } from '../../design/colors';
 
 interface InputProps extends TextInputProps {
   label?: string;

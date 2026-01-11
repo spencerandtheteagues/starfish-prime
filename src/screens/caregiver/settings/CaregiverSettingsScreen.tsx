@@ -25,15 +25,24 @@ const CaregiverSettingsScreen: React.FC<CaregiverSettingsScreenProps> = ({ navig
   const userName = user?.name || 'Caregiver';
 
   const handleSignOut = () => {
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
+    // First, prompt for PIN confirmation
+    Alert.prompt(
+      'Confirm Sign Out',
+      'Enter PIN to sign out (default: 1234)',
       [
         { text: 'Cancel', style: 'cancel' },
         {
           text: 'Sign Out',
           style: 'destructive',
-          onPress: async () => {
+          onPress: async (pin) => {
+            // TODO: Store custom PIN in senior profile
+            const correctPin = senior?.security?.caregiverPin || '1234';
+
+            if (pin !== correctPin) {
+              Alert.alert('Incorrect PIN', 'Please try again');
+              return;
+            }
+
             try {
               await signOut();
             } catch (error) {
@@ -42,26 +51,25 @@ const CaregiverSettingsScreen: React.FC<CaregiverSettingsScreenProps> = ({ navig
             }
           },
         },
-      ]
+      ],
+      'secure-text'
     );
   };
 
   const handleEditSeniorProfile = () => {
-    // TODO: Navigate to senior profile editing
-    Alert.alert('Edit Profile', 'Senior profile editing will be implemented');
+    navigation.navigate('SeniorProfileEdit');
   };
 
   const handleCognitiveSettings = () => {
-    // TODO: Navigate to cognitive settings
-    Alert.alert('Cognitive Settings', 'Cognitive level and tone settings will be implemented');
+    navigation.navigate('CognitiveSettings');
   };
 
   const handleNotificationSettings = () => {
-    Alert.alert('Notifications', 'Notification settings will be implemented');
+    navigation.navigate('NotificationSettings');
   };
 
   const handlePrivacy = () => {
-    Alert.alert('Privacy', 'Privacy settings will be implemented');
+    navigation.navigate('PrivacySettings');
   };
 
   const handleSupport = () => {
@@ -97,8 +105,8 @@ const CaregiverSettingsScreen: React.FC<CaregiverSettingsScreenProps> = ({ navig
           </View>
 
           <TouchableOpacity style={styles.settingRow} onPress={handleEditSeniorProfile}>
-            <Icon name="account-edit" size={24} color={FamilyColors.gray[700]} />
-            <Text style={styles.settingText}>Edit Senior Profile</Text>
+            <Icon name={senior ? "account-edit" : "account-plus"} size={24} color={FamilyColors.gray[700]} />
+            <Text style={styles.settingText}>{senior ? "Edit Senior Profile" : "Add Senior Profile"}</Text>
             <Icon name="chevron-right" size={24} color={FamilyColors.gray[400]} />
           </TouchableOpacity>
 

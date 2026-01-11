@@ -30,6 +30,14 @@
           <string>com.silverguard.eldercare</string>
         </array>
       </dict>
+      <dict>
+        <key>CFBundleTypeRole</key>
+        <string>Editor</string>
+        <key>CFBundleURLSchemes</key>
+        <array>
+          <string>com.googleusercontent.apps.337154350320-ql712u1ggul3k3isjjvjfsaeunct18u2</string>
+        </array>
+      </dict>
     </array>
     <key>CFBundleVersion</key>
     <string>1</string>

@@ -526,7 +526,7 @@ export const inputStyles = StyleSheet.create({
     marginTop: 8,
   } as TextStyle,
 
-  inputError Text: {
+  inputErrorText: {
     ...SeniorTypography.bodyMedium,
     color: SeniorColors.error.primary,
     marginTop: 8,
