@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -6,23 +6,10 @@ import {
   StyleSheet,
   ScrollView,
   ActivityIndicator,
-  Platform,
-  Alert,
 } from 'react-native';
-import {
-  sendBuddyTextMessage,
-  startBuddyVoiceSession,
-  stopBuddyVoiceSession,
-  sendBuddyVoiceMessage,
-} from '../../services/buddy';
+import Voice from '@react-native-voice/voice';
+import { chatWithBuddy } from '../../services/buddy';
 import { speakBuddyMessage, stop as stopSpeaking } from '../../services/tts';
-import {
-  startListening,
-  stopListening,
-  cancelListening,
-  requestMicrophonePermission,
-  VoiceRecognitionResult,
-} from '../../services/voice';
 import { useCurrentUser } from '../../state/useCurrentUser';
 import { SeniorColors } from '../../design/colors';
 import BuddyAvatar from '../../components/BuddyAvatar';
@@ -31,241 +18,159 @@ import BuddyAvatar from '../../components/BuddyAvatar';
  * BuddyChatScreen (Senior)
  *
  * This screen provides a conversational interface between the senior and their AI buddy.
- * It now supports real-time voice interactions via the MCP server, with wake word detection.
  */
 const BuddyChatScreen: React.FC = () => {
   const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
-    { role: 'assistant', content: 'Hello! I’m your buddy. How can I help you today?' },
+    { role: 'assistant', content: 'Hello! I'm your buddy. How are you feeling today?' },
   ]);
-  const [isBuddySpeaking, setIsBuddySpeaking] = useState(false);
-  const [isWakeWordListening, setIsWakeWordListening] = useState(false); // Passive listening for wake word
-  const [isVoiceSessionActive, setIsVoiceSessionActive] = useState(false); // Full real-time MCP session
-  const [isProcessing, setIsProcessing] = useState(false); // For Buddy's thinking state
-  const [currentSpokenText, setCurrentSpokenText] = useState(''); // Real-time transcription of user's speech
+  const [isListening, setIsListening] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [wakeListening, setWakeListening] = useState(true);
   const [emotion, setEmotion] = useState<'NEUTRAL' | 'HAPPY' | 'THINKING'>('NEUTRAL');
-  
+
   const scrollViewRef = useRef<ScrollView>(null);
   const { user } = useCurrentUser();
   const seniorId = user?.role === 'senior' ? (user.activeSeniorId || user.uid) : null;
-  const wakeWord = 'buddy'; // The wake word to activate the session
 
-  // --- Initial Greeting & Component Lifecycle ---
+  // Speak initial greeting on mount
   useEffect(() => {
     const speakIntro = async () => {
-      setIsBuddySpeaking(true);
+      setIsSpeaking(true);
       setEmotion('HAPPY');
-      await speakBuddyMessage('Hello! I’m your buddy. How can I help you today?');
-      setIsBuddySpeaking(false);
+      await speakBuddyMessage('Hello! I'm your buddy. How are you feeling today?');
+      setIsSpeaking(false);
       setEmotion('NEUTRAL');
-      startWakeWordListener(); // Start wake word listening after intro
     };
+    // Small delay to ensure engine is ready
     const timer = setTimeout(() => {
         speakIntro();
     }, 1000);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Sends a message to the buddy and handles the response.
+  const handleSend = async (text: string) => {
+    if (!seniorId) return;
+
+    setMessages(prev => [...prev, { role: 'user', content: text }]);
+    setIsSpeaking(true);
+    setEmotion('THINKING');
+
+    try {
+      // Call updated service
+      const response = await chatWithBuddy(seniorId, text, 'manual');
+      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
+
+      setEmotion('HAPPY');
+      await speakBuddyMessage(response);
+    } catch (e) {
+      console.warn('Chat error', e);
+      setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again later." }]);
+      await speakBuddyMessage("I'm having trouble connecting right now. Please try again later.");
+    } finally {
+      setIsSpeaking(false);
+      setEmotion('NEUTRAL');
+    }
+  };
+
+  // Start speech recognition
+  const handleStartListening = async () => {
+    try {
+      await stopSpeaking(); // Stop TTS if talking
+      setIsSpeaking(false);
+      setIsListening(true);
+      setWakeListening(false);
+      await Voice.start('en-US');
+    } catch (e) {
+      console.warn('Failed to start voice recognition', e);
+      setIsListening(false);
+    }
+  };
+
+  // Send the captured speech text
+  const handleSendVoiceMessage = async (text: string) => {
+    if (!text) {
+      setIsListening(false);
+      return;
+    }
+    try {
+      setIsListening(false);
+      await handleSend(text);
+    } catch (e) {
+      console.warn('Error sending voice message', e);
+    }
+  };
+
+  useEffect(() => {
+    const onSpeechResults = (event: any) => {
+      const results = event.value || [];
+      const transcript = results.join(' ').toLowerCase().trim();
+      if (!transcript) return;
+
+      // Hands‑free wake listening
+      if (wakeListening && !isSpeaking) {
+        if (transcript.includes('buddy')) {
+          const parts = transcript.split('buddy');
+          const message = parts[parts.length - 1].trim();
+          setWakeListening(false);
+          setIsListening(true);
+          handleSendVoiceMessage(message);
+        }
+        return;
+      }
+
+      // Manual listening
+      if (isListening && !isSpeaking) {
+        handleSendVoiceMessage(transcript);
+      }
+    };
+
+    const onSpeechEnd = () => {
+      setIsListening(false);
+      if (!isSpeaking) {
+        setWakeListening(true);
+      }
+    };
+
+    const onSpeechError = (event: any) => {
+      // console.warn('Speech error', event.error); // Suppress noise
+      setIsListening(false);
+      setWakeListening(true);
+    };
+
+    const onSpeechVolumeChanged = (event: any) => {
+      // Suppress warning by handling event
+    };
+
+    Voice.onSpeechResults = onSpeechResults;
+    Voice.onSpeechEnd = onSpeechEnd;
+    Voice.onSpeechError = onSpeechError;
+    Voice.onSpeechVolumeChanged = onSpeechVolumeChanged;
 
     return () => {
-      clearTimeout(timer);
-      // Ensure all listening and sessions are stopped on unmount
-      cancelListening().catch(console.error);
-      stopBuddyVoiceSession().catch(console.error);
+      Voice.destroy().then(Voice.removeAllListeners).catch(() => {});
     };
-  }, []);
+  }, [isSpeaking, wakeListening, isListening, seniorId]);
 
-  // --- Callbacks for MCP Buddy Service ---
-  const onTranscriptReceived = useCallback((transcript: string, isFinal: boolean) => {
-    setCurrentSpokenText(transcript);
-    if (isFinal) {
-      console.log('Final user transcript (MCP session):', transcript);
-      setMessages(prev => [...prev, { role: 'user', content: transcript }]);
-      setCurrentSpokenText(''); // Clear current spoken text for next input
-      setIsProcessing(true); // Buddy processes after user speaks
-    }
-  }, []);
-
-  const onBuddySpeakingStarted = useCallback(() => {
-    setIsBuddySpeaking(true);
-    setEmotion('HAPPY'); // Buddy starts speaking
-    setIsProcessing(false); // Stop thinking
-  }, []);
-
-  const onBuddySpeakingFinished = useCallback(() => {
-    setIsBuddySpeaking(false);
-    setEmotion('NEUTRAL'); // Buddy finished speaking
-    // After Buddy speaks, we should go back to listening for the user
-    // The mcpBuddyService should handle re-enabling its internal STT
-  }, []);
-
-  const onSessionEnded = useCallback(() => {
-    console.log('Buddy voice session ended.');
-    setIsVoiceSessionActive(false);
-    setIsBuddySpeaking(false);
-    setIsProcessing(false);
-    setEmotion('NEUTRAL');
-    setCurrentSpokenText('');
-    setMessages(prev => [...prev, { role: 'assistant', content: "The voice session has ended." }]);
-    startWakeWordListener(); // Go back to wake word listening
-  }, []);
-
-  const onSessionError = useCallback((error: Error) => {
-    console.error('Buddy voice session error:', error);
-    Alert.alert('Voice Error', `Something went wrong with the voice session: ${error.message}`);
-    setIsVoiceSessionActive(false);
-    setIsBuddySpeaking(false);
-    setIsProcessing(false);
-    setEmotion('NEUTRAL');
-    setCurrentSpokenText('');
-    setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble with our voice conversation. Please try again." }]);
-    startWakeWordListener(); // Go back to wake word listening
-  }, []);
-
-  // --- Wake Word Listener Logic ---
-  const startWakeWordListener = useCallback(async () => {
-    if (isVoiceSessionActive || isWakeWordListening) return; // Don't start if active or already listening
-
-    const hasPermission = await requestMicrophonePermission();
-    if (!hasPermission) {
-      Alert.alert('Permission Denied', 'Microphone permission is required for voice interaction.');
-      return;
-    }
-
-    console.log('Starting wake word listener...');
-    setIsWakeWordListening(true);
-    setCurrentSpokenText('Say "Buddy" to start the conversation...');
-
-    await stopSpeaking(); // Stop any ongoing TTS
-
-    try {
-      await startListening({
-        onPartialResults: (res: VoiceRecognitionResult) => {
-          // Display partial results for wake word detection
-          setCurrentSpokenText(res.transcript);
-          const detectedWakeWord = res.transcript.toLowerCase().includes(wakeWord);
-          if (detectedWakeWord && !isVoiceSessionActive && !isBuddySpeaking) {
-            // Wake word detected, transition to active session
-            console.log('Wake word detected!');
-            stopListening(); // Stop current wake word listening
-            setIsWakeWordListening(false);
-            
-            // Extract message after wake word
-            const parts = res.transcript.toLowerCase().split(wakeWord);
-            const initialMessage = parts[parts.length - 1].trim();
-            
-            startActiveVoiceSession(initialMessage);
-          }
-        },
-        onFinalResult: (res: VoiceRecognitionResult) => {
-          // If wake word was not detected in partial results, check final
-          const detectedWakeWord = res.transcript.toLowerCase().includes(wakeWord);
-          if (detectedWakeWord && !isVoiceSessionActive && !isBuddySpeaking) {
-            console.log('Wake word detected (final result)!');
-            setIsWakeWordListening(false);
-            
-            const parts = res.transcript.toLowerCase().split(wakeWord);
-            const initialMessage = parts[parts.length - 1].trim();
-            
-            startActiveVoiceSession(initialMessage);
-          } else {
-            // No wake word, restart listening for it
-            startWakeWordListener();
-          }
-        },
-        onError: (error) => {
-          console.error('Wake word listener error:', error);
-          setIsWakeWordListening(false);
-          setCurrentSpokenText('');
-          // Attempt to restart or inform user
-          Alert.alert('Listening Error', 'Failed to listen for wake word. Please try again.');
-          // Consider a retry mechanism or a manual button to restart wake word listener
-        },
-      });
-    } catch (error) {
-      console.error('Failed to start wake word listener:', error);
-      setIsWakeWordListening(false);
-      setCurrentSpokenText('');
-      Alert.alert('Microphone Error', 'Could not access microphone for wake word detection.');
-    }
-  }, [isVoiceSessionActive, isBuddySpeaking, isWakeWordListening, seniorId, onBuddySpeakingStarted, onBuddySpeakingFinished, onSessionEnded, onSessionError]);
-
-
-  // --- Active Voice Session Management ---
-  const startActiveVoiceSession = useCallback(async (initialMessage: string = '') => {
-    if (!seniorId) {
-      Alert.alert('Error', 'Senior ID not available. Cannot start voice session.');
-      return;
-    }
-    if (isVoiceSessionActive) return;
-
-    console.log('Starting active Buddy voice session...');
-    setIsProcessing(true); // Indicate Buddy is 'thinking' while setting up session
-    setIsVoiceSessionActive(true);
-    setMessages(prev => [...prev, { role: 'assistant', content: "Voice session activated. How can I help?" }]);
-
-    try {
-      await startBuddyVoiceSession({
-        onTranscriptReceived: onTranscriptReceived,
-        onSpeakingStarted: onBuddySpeakingStarted,
-        onSpeakingFinished: onBuddySpeakingFinished,
-        onSessionEnded: onSessionEnded,
-        onError: onSessionError,
-      });
-
-      setIsProcessing(false); // Session started, no longer 'thinking' about setup
-      setEmotion('NEUTRAL'); // Initial state for new session
-
-      if (initialMessage) {
-        console.log('Sending initial message from wake word:', initialMessage);
-        await sendBuddyVoiceMessage(initialMessage);
-        setMessages(prev => [...prev, { role: 'user', content: initialMessage }]);
+  // Start wake listener
+  useEffect(() => {
+    const startWakeListening = async () => {
+      try {
+        await Voice.start('en-US');
+      } catch (e) {
+        // ignore
       }
-    } catch (error) {
-      console.error('Failed to start active Buddy voice session:', error);
-      onSessionError(error as Error); // Use the general session error handler
+    };
+    if (wakeListening && !isListening && !isSpeaking) {
+      startWakeListening();
     }
-  }, [seniorId, onTranscriptReceived, onBuddySpeakingStarted, onBuddySpeakingFinished, onSessionEnded, onSessionError, isVoiceSessionActive]);
+  }, [wakeListening, isListening, isSpeaking]);
 
-
-  const stopActiveVoiceSession = useCallback(async () => {
-    if (!isVoiceSessionActive) return;
-
-    console.log('Stopping active Buddy voice session...');
+  const stopListening = async () => {
     try {
-      await stopBuddyVoiceSession();
-      // State will be updated by onSessionEnded callback
-    } catch (error) {
-      console.error('Failed to stop active Buddy voice session:', error);
-      Alert.alert('Error', 'Failed to stop voice session.');
-    }
-  }, [isVoiceSessionActive, stopBuddyVoiceSession]);
-
-
-  // --- Manual Text Sending (Fallback/Alternative) ---
-  const handleManualSend = async (text: string) => {
-    if (!seniorId || !text.trim()) return;
-
-    // For now, manual send always uses text chat via Firebase function
-    // Could be extended to send to active voice session if desired
-    setMessages(prev => [...prev, { role: 'user', content: text }]);
-    setIsBuddySpeaking(true);
-    setIsProcessing(true);
-    setEmotion('THINKING');
-    try {
-      const response = await sendBuddyTextMessage(seniorId, text, 'manual');
-      setMessages(prev => [...prev, { role: 'assistant', content: response }]);
-      setEmotion('HAPPY');
-      await speakBuddyMessage(response, 1.0, () => {
-        setIsBuddySpeaking(false);
-        setEmotion('NEUTRAL');
-      });
-    } catch (e) {
-      console.warn('Text chat error', e);
-      setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again later." }]);
-      await speakBuddyMessage("I'm having trouble connecting right now. Please try again later.", 1.0, () => {
-        setIsBuddySpeaking(false);
-        setEmotion('NEUTRAL');
-      });
-    } finally {
-      setIsProcessing(false);
-    }
+      await Voice.stop();
+    } catch { }
+    setIsListening(false);
   };
 
   // Auto-scroll to bottom
@@ -273,31 +178,22 @@ const BuddyChatScreen: React.FC = () => {
     if (scrollViewRef.current) {
         scrollViewRef.current.scrollToEnd({ animated: true });
     }
-  }, [messages, currentSpokenText]);
+  }, [messages]);
 
   if (!user) {
      return <View style={[styles.container, styles.center]}><ActivityIndicator size="large" /></View>;
   }
 
-  const micButtonText = isVoiceSessionActive
-    ? 'End Voice Chat'
-    : (isWakeWordListening ? 'Listening for "Buddy"...' : 'Start Listening for "Buddy"');
-
   return (
     <View style={styles.container}>
       {/* Avatar Section */}
       <View style={styles.avatarContainer}>
-        <BuddyAvatar 
-            emotion={emotion} 
-            isSpeaking={isBuddySpeaking} 
-            isProcessing={isProcessing}
-            size={200} 
+        <BuddyAvatar
+            emotion={emotion}
+            isSpeaking={isSpeaking}
+            isProcessing={emotion === 'THINKING'}
+            size={200}
         />
-        {(isVoiceSessionActive || isWakeWordListening) && currentSpokenText.length > 0 && (
-          <View style={styles.currentSpokenTextContainer}>
-            <Text style={styles.currentSpokenText}>{currentSpokenText}</Text>
-          </View>
-        )}
       </View>
 
       <ScrollView
@@ -318,13 +214,11 @@ const BuddyChatScreen: React.FC = () => {
       </ScrollView>
       <View style={styles.controls}>
         <TouchableOpacity
-          style={isVoiceSessionActive ? styles.listeningButton : styles.microphoneButton}
-          onPress={isVoiceSessionActive ? stopActiveVoiceSession : startWakeWordListener}
-          disabled={isBuddySpeaking}
+          style={isListening ? styles.listeningButton : styles.microphoneButton}
+          onPress={isListening ? stopListening : handleStartListening}
         >
-          <Text style={styles.buttonText}>{micButtonText}</Text>
+          <Text style={styles.buttonText}>{isListening ? 'Stop Listening' : 'Talk to Buddy'}</Text>
         </TouchableOpacity>
-        {/* Potentially add a text input here for manual entry, using handleManualSend */}
       </View>
     </View>
   );
@@ -344,20 +238,6 @@ const styles = StyleSheet.create({
     paddingTop: 40,
     paddingBottom: 20,
     backgroundColor: '#FFF9C4', // Match avatar bg slightly
-  },
-  currentSpokenTextContainer: {
-    backgroundColor: 'rgba(0,0,0,0.7)',
-    borderRadius: 20,
-    paddingHorizontal: 15,
-    paddingVertical: 10,
-    marginTop: 10,
-    position: 'absolute',
-    bottom: 5, // Position below the avatar
-  },
-  currentSpokenText: {
-    color: '#fff',
-    fontSize: 16,
-    textAlign: 'center',
   },
   messageContainer: {
     flex: 1,

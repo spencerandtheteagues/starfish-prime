@@ -44,3 +44,9 @@ export async function sendBuddyTextMessage(
  * Alias for sendBuddyTextMessage to maintain compatibility
  */
 export const chatWithBuddy = sendBuddyTextMessage;
+
+// ============================================================================
+// REALTIME VOICE FUNCTIONS
+// ============================================================================
+
+export { realtimeService } from './realtime';

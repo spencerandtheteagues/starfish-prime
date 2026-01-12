@@ -58,10 +58,10 @@ export const createRealtimeSession = functions.https.onCall(
         body: JSON.stringify({
           model: 'gpt-4o-realtime-preview-2024-12-17',
           voice: voice,
-          // Use custom AI Buddy prompt
+          // Use custom AI Buddy prompt with guardrails (version 5)
           prompt: {
             id: 'pmpt_696464a11e8c8193b22df8bb67bd8f530cf75992db71453b',
-            version: '4'
+            version: '5'
           },
           // Optional: Override instructions if provided
           ...(instructions && { instructions }),
