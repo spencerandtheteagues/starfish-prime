@@ -1,4 +1,4 @@
-package com.eldercare
+package com.silverguard.eldercare
 
 import android.app.Application
 import android.content.res.Configuration

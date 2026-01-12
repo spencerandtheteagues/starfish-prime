@@ -18,11 +18,15 @@ import { logEvent } from './ai/loggingEngine';
 import { generateReport } from './ai/reportingEngine';
 import { lookup } from './ai/lookupService';
 import { generateSpeech } from './tts/generateSpeech';
+import { createRealtimeSession } from './realtime/createRealtimeSession';
 
 admin.initializeApp();
 
 // Export TTS function
 export { generateSpeech };
+
+// Export Realtime API function
+export { createRealtimeSession };
 
 /**
  * chat

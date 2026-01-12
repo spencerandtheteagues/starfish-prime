@@ -1,4 +1,4 @@
-package com.eldercare
+package com.silverguard.eldercare
 
 import android.os.Build
 import android.os.Bundle

@@ -5,6 +5,8 @@
 
 import * as Speech from 'expo-speech';
 import { Platform } from 'react-native';
+import Voice from '@react-native-voice/voice';
+import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 // ============================================================================
 // TEXT-TO-SPEECH (TTS)
@@ -73,19 +75,6 @@ export async function getAvailableVoices(): Promise<Speech.Voice[]> {
 // SPEECH-TO-TEXT (STT)
 // ============================================================================
 
-/**
- * NOTE: For production STT, you'll need to add react-native-voice or similar.
- * expo-speech only handles TTS, not STT.
- *
- * Installation:
- * npm install @react-native-voice/voice
- * npx expo prebuild
- * npx expo run:ios / npx expo run:android
- *
- * This is a placeholder implementation that shows the interface.
- * The actual implementation requires native modules.
- */
-
 export interface VoiceRecognitionResult {
   transcript: string;
   isFinal: boolean;
@@ -99,73 +88,84 @@ export interface VoiceRecognitionOptions {
   onError?: (error: Error) => void;
 }
 
+// Setup event handlers for @react-native-voice/voice
+let _onPartialResults: ((result: VoiceRecognitionResult) => void) | undefined;
+let _onFinalResult: ((result: VoiceRecognitionResult) => void) | undefined;
+let _onError: ((error: Error) => void) | undefined;
+
+Voice.onSpeechResults = (e: any) => {
+  if (e.value && e.value[0]) {
+    _onFinalResult?.({ transcript: e.value[0], isFinal: true });
+  }
+};
+
+Voice.onSpeechPartialResults = (e: any) => {
+  if (e.value && e.value[0]) {
+    _onPartialResults?.({ transcript: e.value[0], isFinal: false });
+  }
+};
+
+Voice.onSpeechError = (e: any) => {
+  console.error('STT Voice Error:', e);
+  _onError?.(new Error(e.error?.message || 'Unknown STT error'));
+};
+
 /**
  * Start listening for speech
- *
- * IMPLEMENTATION NOTE:
- * This is a placeholder. To implement:
- * 1. Install @react-native-voice/voice
- * 2. Import Voice from '@react-native-voice/voice'
- * 3. Implement Voice.start(), Voice.onSpeechResults, etc.
- *
- * Example real implementation:
- *
- * import Voice from '@react-native-voice/voice';
- *
- * Voice.onSpeechResults = (e) => {
- *   if (e.value && e.value[0]) {
- *     onFinalResult?.({ transcript: e.value[0], isFinal: true });
- *   }
- * };
- *
- * Voice.onSpeechPartialResults = (e) => {
- *   if (e.value && e.value[0]) {
- *     onPartialResults?.({ transcript: e.value[0], isFinal: false });
- *   }
- * };
- *
- * await Voice.start(language || 'en-US');
  */
 export async function startListening(options?: VoiceRecognitionOptions): Promise<void> {
   const { language = 'en-US', onPartialResults, onFinalResult, onError } = options || {};
 
-  // TODO: Implement with @react-native-voice/voice
-  console.warn('STT not yet implemented. Install @react-native-voice/voice');
+  _onPartialResults = onPartialResults;
+  _onFinalResult = onFinalResult;
+  _onError = onError;
 
-  // For now, throw error to indicate not implemented
-  throw new Error(
-    'Speech-to-text requires @react-native-voice/voice. Please install:\n' +
-    'npm install @react-native-voice/voice\n' +
-    'npx expo prebuild\n' +
-    'npx expo run:ios (or run:android)'
-  );
+  try {
+    await Voice.start(language);
+    console.log('STT listening started');
+  } catch (error) {
+    console.error('STT start error:', error);
+    _onError?.(error as Error);
+    throw error;
+  }
 }
 
 /**
  * Stop listening for speech
  */
 export async function stopListening(): Promise<void> {
-  // TODO: Implement with @react-native-voice/voice
-  // await Voice.stop();
-  console.warn('STT not yet implemented');
+  try {
+    await Voice.stop();
+    console.log('STT listening stopped');
+  } catch (error) {
+    console.error('STT stop error:', error);
+    throw error;
+  }
 }
 
 /**
  * Cancel listening (no results)
  */
 export async function cancelListening(): Promise<void> {
-  // TODO: Implement with @react-native-voice/voice
-  // await Voice.cancel();
-  console.warn('STT not yet implemented');
+  try {
+    await Voice.cancel();
+    console.log('STT listening cancelled');
+  } catch (error) {
+    console.error('STT cancel error:', error);
+    throw error;
+  }
 }
 
 /**
  * Check if speech recognition is available
  */
 export async function isRecognitionAvailable(): Promise<boolean> {
-  // TODO: Implement with @react-native-voice/voice
-  // return Voice.isAvailable();
-  return false; // Not available until implemented
+  try {
+    return await Voice.isAvailable();
+  } catch (error) {
+    console.error('STT availability error:', error);
+    return false;
+  }
 }
 
 /**
@@ -177,24 +177,29 @@ export async function requestMicrophonePermission(): Promise<boolean> {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
       stream.getTracks().forEach(track => track.stop());
       return true;
-    } catch {
+    } catch (error) {
+      console.error('Web microphone permission error:', error);
       return false;
     }
   }
 
-  // TODO: For native, use react-native-permissions or expo-permissions
-  // import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
-  //
-  // const permission = Platform.select({
-  //   ios: PERMISSIONS.IOS.MICROPHONE,
-  //   android: PERMISSIONS.ANDROID.RECORD_AUDIO,
-  // });
-  //
-  // const result = await request(permission);
-  // return result === RESULTS.GRANTED;
+  const permission = Platform.select({
+    ios: PERMISSIONS.IOS.MICROPHONE,
+    android: PERMISSIONS.ANDROID.RECORD_AUDIO,
+  });
 
-  console.warn('Microphone permission check not implemented');
-  return true; // Assume granted for now
+  if (!permission) {
+    console.warn('Microphone permission not applicable for this platform.');
+    return false;
+  }
+
+  try {
+    const result = await request(permission);
+    return result === RESULTS.GRANTED;
+  } catch (error) {
+    console.error('Native microphone permission request error:', error);
+    return false;
+  }
 }
 
 // ============================================================================

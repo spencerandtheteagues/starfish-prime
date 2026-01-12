@@ -1,14 +1,18 @@
 /**
  * AI Buddy Service
- * Client-side integration with Firebase Cloud Functions
+ * Client-side integration with Firebase Cloud Functions for AI chat
  */
 
 import { firebaseFunctions } from './firebase';
 
+// ============================================================================
+// TEXT-BASED CHAT FUNCTIONS (via Firebase Cloud Functions)
+// ============================================================================
+
 /**
- * Chat with Buddy (calls server-side Cloud Function)
+ * Send a text message to Buddy and get a text reply (calls server-side Cloud Function)
  */
-export async function chatWithBuddy(
+export async function sendBuddyTextMessage(
   seniorId: string,
   message: string,
   wakeReason: string = 'manual'
@@ -27,7 +31,16 @@ export async function chatWithBuddy(
     const data = result.data as { reply: string };
     return data.reply;
   } catch (error) {
-    console.error('Error in chatWithBuddy:', error);
+    console.error('Error in sendBuddyTextMessage:', error);
     throw error; // Let the UI handle the error (e.g. show "Buddy is sleeping")
   }
 }
+
+// ============================================================================
+// ALIAS FOR COMPATIBILITY
+// ============================================================================
+
+/**
+ * Alias for sendBuddyTextMessage to maintain compatibility
+ */
+export const chatWithBuddy = sendBuddyTextMessage;
