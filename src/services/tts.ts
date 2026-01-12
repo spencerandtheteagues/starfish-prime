@@ -1,11 +1,13 @@
 /**
  * Text-to-Speech Service
- * Using expo-speech with high-quality neural voices for natural, human-like speech
- * Similar to ChatGPT/Gemini voice conversations
+ * Using OpenAI TTS API for natural, human-like speech
+ * Same quality as ChatGPT voice mode
  */
 
 import * as Speech from 'expo-speech';
 import { Platform } from 'react-native';
+import { Audio } from 'expo-av';
+import { firebaseFunctions } from './firebase';
 
 // ============================================================================
 // TTS CONFIGURATION - NATURAL VOICE SETTINGS
@@ -111,11 +113,124 @@ export const speak = async (
 };
 
 // ============================================================================
-// STOP SPEECH
+// OPENAI TTS - CHATGPT QUALITY VOICE
+// ============================================================================
+
+let currentSound: Audio.Sound | null = null;
+
+/**
+ * Generate and play speech using OpenAI TTS (ChatGPT quality)
+ * This provides the most natural, human-like voice
+ */
+export const speakWithOpenAI = async (
+  text: string,
+  options?: {
+    voice?: 'alloy' | 'echo' | 'fable' | 'onyx' | 'nova' | 'shimmer';
+    speed?: number; // 0.25 to 4.0
+    onDone?: () => void;
+    onError?: (error: any) => void;
+  }
+): Promise<void> => {
+  try {
+    // Stop any current playback
+    await stopOpenAI();
+
+    // Configure audio mode for playback
+    await Audio.setAudioModeAsync({
+      playsInSilentModeIOS: true,
+      staysActiveInBackground: false,
+    });
+
+    console.log('🎙️ Calling OpenAI TTS...');
+
+    // Call Cloud Function to generate speech
+    const generateSpeechFn = firebaseFunctions.httpsCallable('generateSpeech');
+    const result = await generateSpeechFn({
+      text,
+      voice: options?.voice || 'nova', // nova is warm and friendly - perfect for AI Buddy
+      model: 'tts-1', // Fast, low latency
+      speed: options?.speed || 1.0,
+    });
+
+    const { audio: base64Audio } = result.data as { audio: string };
+
+    if (!base64Audio) {
+      throw new Error('No audio returned from TTS service');
+    }
+
+    console.log('✅ Received audio from OpenAI, playing...');
+
+    // Convert base64 to audio URI
+    const audioUri = `data:audio/mp3;base64,${base64Audio}`;
+
+    // Load and play audio
+    const { sound } = await Audio.Sound.createAsync(
+      { uri: audioUri },
+      { shouldPlay: true }
+    );
+
+    currentSound = sound;
+
+    // Set up completion callback
+    sound.setOnPlaybackStatusUpdate((status) => {
+      if (status.isLoaded && status.didJustFinish) {
+        console.log('✅ OpenAI TTS playback finished');
+        currentSound = null;
+        if (options?.onDone) {
+          options.onDone();
+        }
+      }
+    });
+
+  } catch (error) {
+    console.error('OpenAI TTS error:', error);
+    if (options?.onError) {
+      options.onError(error);
+    }
+    // Fallback to system TTS
+    console.log('⚠️ Falling back to system TTS');
+    await speak(text, {
+      onDone: options?.onDone,
+      onError: options?.onError,
+    });
+  }
+};
+
+/**
+ * Stop OpenAI TTS playback
+ */
+export const stopOpenAI = async (): Promise<void> => {
+  try {
+    if (currentSound) {
+      await currentSound.stopAsync();
+      await currentSound.unloadAsync();
+      currentSound = null;
+    }
+  } catch (error) {
+    console.error('Error stopping OpenAI TTS:', error);
+  }
+};
+
+/**
+ * Check if OpenAI TTS is currently playing
+ */
+export const isOpenAISpeaking = async (): Promise<boolean> => {
+  try {
+    if (!currentSound) return false;
+    const status = await currentSound.getStatusAsync();
+    return status.isLoaded && status.isPlaying;
+  } catch (error) {
+    return false;
+  }
+};
+
+// ============================================================================
+// STOP SPEECH (Both OpenAI and System)
 // ============================================================================
 
 export const stop = async (): Promise<void> => {
   try {
+    await stopOpenAI();
     await Speech.stop();
   } catch (error) {
     console.error('TTS stop error:', error);
@@ -128,7 +243,9 @@ export const stop = async (): Promise<void> => {
 
 export const isSpeaking = async (): Promise<boolean> => {
   try {
-    return await Speech.isSpeakingAsync();
+    const openAISpeaking = await isOpenAISpeaking();
+    const systemSpeaking = await Speech.isSpeakingAsync();
+    return openAISpeaking || systemSpeaking;
   } catch (error) {
     console.error('TTS isSpeaking error:', error);
     return false;
@@ -174,22 +291,22 @@ export const getAvailableVoices = async (): Promise<Speech.Voice[]> => {
 // ============================================================================
 
 /**
- * Speak message from AI Buddy with natural, conversational voice
- * Sounds like a real person, similar to ChatGPT/Gemini voice mode
+ * Speak message from AI Buddy with OpenAI TTS
+ * ChatGPT-quality voice - sounds like a real person
  */
 export const speakBuddyMessage = async (
   text: string,
   voiceRate: number = DEFAULT_VOICE_RATE,
   onDone?: () => void
 ): Promise<void> => {
-  // Ensure we have the best voice selected
-  await initializeVoice();
-
-  return speak(text, {
-    rate: voiceRate,
-    pitch: 1.0, // Natural pitch
-    language: 'en-US',
+  // Use OpenAI TTS for the most natural voice
+  return speakWithOpenAI(text, {
+    voice: 'nova', // Warm, friendly female voice - perfect for AI Buddy
+    speed: voiceRate,
     onDone,
+    onError: (error) => {
+      console.error('OpenAI TTS failed, using fallback:', error);
+    },
   });
 };
 
@@ -248,8 +365,11 @@ export const speakAppointmentReminder = async (
 
 export default {
   speak,
+  speakWithOpenAI,
   stop,
+  stopOpenAI,
   isSpeaking,
+  isOpenAISpeaking,
   pause,
   resume,
   getAvailableVoices,

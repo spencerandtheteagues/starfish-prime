@@ -17,8 +17,12 @@ import { detectEmergency } from './ai/safetyGate';
 import { logEvent } from './ai/loggingEngine';
 import { generateReport } from './ai/reportingEngine';
 import { lookup } from './ai/lookupService';
+import { generateSpeech } from './tts/generateSpeech';
 
 admin.initializeApp();
+
+// Export TTS function
+export { generateSpeech };
 
 /**
  * chat
