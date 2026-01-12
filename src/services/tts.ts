@@ -1,20 +1,75 @@
 /**
  * Text-to-Speech Service
- * Using expo-speech for on-device TTS (privacy-first, free, offline-capable)
+ * Using expo-speech with high-quality neural voices for natural, human-like speech
+ * Similar to ChatGPT/Gemini voice conversations
  */
 
 import * as Speech from 'expo-speech';
+import { Platform } from 'react-native';
 
 // ============================================================================
-// TTS CONFIGURATION
+// TTS CONFIGURATION - NATURAL VOICE SETTINGS
 // ============================================================================
 
-const DEFAULT_VOICE_RATE = 0.9; // Slightly slower for seniors
+const DEFAULT_VOICE_RATE = 1.0; // Natural speaking pace
 const DEFAULT_PITCH = 1.0;
 const DEFAULT_LANGUAGE = 'en-US';
 
+// Best quality voices for iOS (neural/enhanced)
+// These are the same voices used in Siri and modern iOS apps
+const IOS_VOICES = [
+  'com.apple.voice.enhanced.en-US.Samantha', // Female, warm and natural
+  'com.apple.voice.premium.en-US.Zoe',       // Female, young and friendly
+  'com.apple.voice.premium.en-US.Ava',       // Female, professional
+  'com.apple.ttsbundle.Samantha-premium',    // Fallback
+  'com.apple.speech.synthesis.voice.samantha', // System fallback
+];
+
+let selectedVoice: string | null = null;
+let voicesInitialized = false;
+
+// Initialize and select the best available voice
+const initializeVoice = async () => {
+  if (voicesInitialized) return;
+
+  try {
+    const availableVoices = await Speech.getAvailableVoicesAsync();
+    console.log('📢 Available TTS voices:', availableVoices.length);
+
+    if (Platform.OS === 'ios') {
+      // Try to find premium/enhanced voices
+      for (const preferredVoice of IOS_VOICES) {
+        const found = availableVoices.find(v => v.identifier === preferredVoice);
+        if (found) {
+          selectedVoice = found.identifier;
+          console.log('✅ Selected high-quality voice:', found.name, found.identifier);
+          break;
+        }
+      }
+
+      // Fallback: Find any enhanced/premium en-US voice
+      if (!selectedVoice) {
+        const enhancedVoice = availableVoices.find(v =>
+          v.language.startsWith('en-US') &&
+          (v.identifier.includes('enhanced') ||
+           v.identifier.includes('premium') ||
+           v.quality === Speech.VoiceQuality.Enhanced)
+        );
+        if (enhancedVoice) {
+          selectedVoice = enhancedVoice.identifier;
+          console.log('✅ Selected enhanced voice:', enhancedVoice.name);
+        }
+      }
+    }
+
+    voicesInitialized = true;
+  } catch (error) {
+    console.warn('Could not initialize premium voice, using system default:', error);
+  }
+};
+
 // ============================================================================
-// SPEAK TEXT
+// SPEAK TEXT WITH NATURAL VOICE
 // ============================================================================
 
 export const speak = async (
@@ -23,12 +78,16 @@ export const speak = async (
     rate?: number; // 0.5 - 2.0
     pitch?: number; // 0.5 - 2.0
     language?: string;
+    voice?: string;
     onDone?: () => void;
     onStopped?: () => void;
     onError?: (error: any) => void;
   }
 ): Promise<void> => {
   try {
+    // Initialize voice on first use
+    await initializeVoice();
+
     // Stop any ongoing speech
     await stop();
 
@@ -36,6 +95,7 @@ export const speak = async (
       language: options?.language || DEFAULT_LANGUAGE,
       pitch: options?.pitch || DEFAULT_PITCH,
       rate: options?.rate || DEFAULT_VOICE_RATE,
+      voice: options?.voice || selectedVoice || undefined,
       onDone: options?.onDone,
       onStopped: options?.onStopped,
       onError: options?.onError,
@@ -114,16 +174,20 @@ export const getAvailableVoices = async (): Promise<Speech.Voice[]> => {
 // ============================================================================
 
 /**
- * Speak message from AI Buddy with appropriate settings
+ * Speak message from AI Buddy with natural, conversational voice
+ * Sounds like a real person, similar to ChatGPT/Gemini voice mode
  */
 export const speakBuddyMessage = async (
   text: string,
   voiceRate: number = DEFAULT_VOICE_RATE,
   onDone?: () => void
 ): Promise<void> => {
+  // Ensure we have the best voice selected
+  await initializeVoice();
+
   return speak(text, {
     rate: voiceRate,
-    pitch: 1.0,
+    pitch: 1.0, // Natural pitch
     language: 'en-US',
     onDone,
   });

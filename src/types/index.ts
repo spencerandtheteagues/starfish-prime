@@ -199,6 +199,7 @@ export interface Appointment {
   seniorId: string;
   doctorName: string;
   specialty?: string;
+  title?: string; // Optional display title
   location: string;
   address?: string;
   phone?: string;
@@ -373,6 +374,7 @@ export type SeniorStackParamList = {
   SeniorContacts: undefined;
   SeniorSOS: undefined;
   BuddyChat: undefined;
+  HealthCharts: undefined;
 };
 
 export type CaregiverTabParamList = {

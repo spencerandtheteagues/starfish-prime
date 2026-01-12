@@ -1,60 +1,34 @@
+/*
+ * reportingEngine.ts
+ *
+ * Generates daily, weekly and monthly reports from logged events. This
+ * simplified version gathers events within the period and summarizes
+ * counts by type. In a real implementation, this engine would call
+ * language models to polish summaries and include trend analysis.
+ */
 import * as admin from 'firebase-admin';
-import { callModel } from './modelRouter';
 
-export async function generateReport(seniorId: string, type: 'daily' | 'weekly' | 'monthly') {
+export async function generateReport(seniorId: string, timeframe: 'daily' | 'weekly' | 'monthly'): Promise<any> {
   const db = admin.firestore();
-  
-  // Fetch data for the period
   const now = new Date();
-  let startTime = new Date();
-  if (type === 'daily') startTime.setDate(now.getDate() - 1);
-  else if (type === 'weekly') startTime.setDate(now.getDate() - 7);
-  else if (type === 'monthly') startTime.setMonth(now.getMonth() - 1);
-
-  // Fetch logs, alerts, meds adherence, etc.
-  const [logsSnapshot, alertsSnapshot, medsSnapshot] = await Promise.all([
-    db.collection('seniors').doc(seniorId).collection('logs')
-      .where('timestamp', '>=', startTime.toISOString())
-      .get(),
-    db.collection('seniors').doc(seniorId).collection('alerts')
-      .where('timestamp', '>=', startTime.toISOString())
-      .get(),
-    db.collection('seniors').doc(seniorId).collection('medEvents')
-      .where('scheduledTime', '>=', admin.firestore.Timestamp.fromDate(startTime))
-      .get()
-  ]);
-
-  const logs = logsSnapshot.docs.map(doc => doc.data());
-  const alerts = alertsSnapshot.docs.map(doc => doc.data());
-  const meds = medsSnapshot.docs.map(doc => doc.data());
-  
-  // Use model to generate report summary
-  const reportSummary = await callModel({
-    seniorId,
-    messages: [
-      { 
-        role: 'user', 
-        content: `Generate a ${type} report for the caregiver. 
-        Logs: ${JSON.stringify(logs)}
-        Alerts: ${JSON.stringify(alerts)}
-        Medication Events: ${JSON.stringify(meds)}` 
-      }
-    ],
-    system: "You are the SilverGuard Reporting Engine. Summarize senior activity, health trends, and any concerns into a professional, actionable report for a caregiver. Focus on patterns and wellbeing. Output JSON if possible, but for the summary field, provide clear text."
+  let startDate = new Date(now);
+  if (timeframe === 'daily') startDate.setDate(now.getDate() - 1);
+  if (timeframe === 'weekly') startDate.setDate(now.getDate() - 7);
+  if (timeframe === 'monthly') startDate.setMonth(now.getMonth() - 1);
+  const snapshot = await db
+    .collection('logEvents')
+    .where('seniorId', '==', seniorId)
+    .where('timestamp', '>=', admin.firestore.Timestamp.fromDate(startDate))
+    .get();
+  const counts: Record<string, number> = {};
+  snapshot.forEach(doc => {
+    const type = doc.data().type;
+    counts[type] = (counts[type] || 0) + 1;
   });
-
-  const reportDoc = {
-    type,
-    periodStart: startTime.toISOString(),
-    periodEnd: now.toISOString(),
-    summary: reportSummary, // This might be JSON depending on model response, handle appropriately
-    createdAt: now.toISOString(),
-    sections: [
-      { title: "Wellness Summary", content: reportSummary },
-      { title: "Medication Adherence", content: `${meds.filter(m => m.status === 'taken').length}/${meds.length} taken` }
-    ]
+  return {
+    seniorId,
+    timeframe,
+    summary: counts,
+    generatedAt: admin.firestore.Timestamp.now(),
   };
-
-  const reportRef = await db.collection('seniors').doc(seniorId).collection('reports').add(reportDoc);
-  return { id: reportRef.id, ...reportDoc };
 }

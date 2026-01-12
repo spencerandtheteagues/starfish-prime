@@ -1,11 +1,11 @@
 import React, { useEffect, useMemo } from 'react';
 import { View, StyleSheet } from 'react-native';
-import Svg, { G, Circle, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
-import Animated, { 
-  useAnimatedProps, 
-  useSharedValue, 
-  withTiming, 
-  withRepeat, 
+import Svg, { G, Circle, Ellipse, Path, Defs, RadialGradient, Stop } from 'react-native-svg';
+import Animated, {
+  useAnimatedProps,
+  useSharedValue,
+  withTiming,
+  withRepeat,
   withSequence,
   Easing,
   interpolate,
@@ -13,6 +13,7 @@ import Animated, {
 } from 'react-native-reanimated';
 
 const AnimatedPath = Animated.createAnimatedComponent(Path);
+const AnimatedEllipse = Animated.createAnimatedComponent(Ellipse);
 
 export type BuddyEmotion = 'NEUTRAL' | 'HAPPY' | 'SAD' | 'ANGRY' | 'SMUG' | 'THINKING' | 'SURPRISED';
 
@@ -233,28 +234,24 @@ const BuddyAvatar: React.FC<BuddyAvatarProps> = ({
         {/* Eyes */}
         <G>
           {/* Left Eye */}
-          <Animated.View style={{ transform: [{ scale: faceScale }] }}>
-             <Circle cx="70" cy="80" r="12" fill="white" opacity={0.3} />
-             <Animated.Ellipse 
-                cx="70" 
-                cy="80" 
-                rx="10" 
-                animatedProps={leftEyeAnimatedProps}
-                fill="#37474F" 
-              />
-          </Animated.View>
+          <Circle cx="70" cy="80" r="12" fill="white" opacity={0.3} />
+          <AnimatedEllipse
+            cx="70"
+            cy="80"
+            rx="10"
+            animatedProps={leftEyeAnimatedProps}
+            fill="#37474F"
+          />
 
           {/* Right Eye */}
-          <Animated.View style={{ transform: [{ scale: faceScale }] }}>
-            <Circle cx="130" cy="80" r="12" fill="white" opacity={0.3} />
-            <Animated.Ellipse 
-                cx="130" 
-                cy="80" 
-                rx="10" 
-                animatedProps={rightEyeAnimatedProps}
-                fill="#37474F" 
-              />
-          </Animated.View>
+          <Circle cx="130" cy="80" r="12" fill="white" opacity={0.3} />
+          <AnimatedEllipse
+            cx="130"
+            cy="80"
+            rx="10"
+            animatedProps={rightEyeAnimatedProps}
+            fill="#37474F"
+          />
         </G>
 
         {/* Brows */}

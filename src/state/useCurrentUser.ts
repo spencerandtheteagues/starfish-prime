@@ -4,7 +4,8 @@
  */
 
 import { useState, useEffect } from 'react';
-import { onAuthStateChanged, getUserProfile } from '../services/auth';
+import { onAuthStateChanged } from '../services/auth';
+import { userDoc } from '../services/firebase';
 import { User } from '../types';
 
 export const useCurrentUser = () => {
@@ -13,25 +14,57 @@ export const useCurrentUser = () => {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(async (firebaseUser) => {
+    let unsubscribeFirestore: (() => void) | undefined;
+
+    const unsubscribeAuth = onAuthStateChanged((firebaseUser) => {
       if (firebaseUser) {
-        try {
-          const userProfile = await getUserProfile(firebaseUser.uid);
-          setUser(userProfile);
-          setError(null);
-        } catch (err: any) {
-          console.error('Error loading user profile:', err);
-          setError(err.message);
-          setUser(null);
-        }
+        // User is authenticated, now listen for their Firestore profile
+        // This handles race conditions during signup (when doc is being created)
+        unsubscribeFirestore = userDoc(firebaseUser.uid).onSnapshot(
+          (snapshot) => {
+            if (snapshot.exists) {
+              const data = snapshot.data();
+              setUser({
+                uid: firebaseUser.uid,
+                role: data?.role,
+                email: data?.email,
+                phone: data?.phone,
+                name: data?.name,
+                createdAt: data?.createdAt?.toDate ? data.createdAt.toDate() : new Date(),
+                activeSeniorId: data?.activeSeniorId,
+              } as User);
+            } else {
+              // Document doesn't exist yet (or was deleted). 
+              // During signup, this might happen briefly before the doc is written.
+              // We set user to null, but since we are listening, it will update 
+              // automatically once the document is created.
+              setUser(null);
+            }
+            setLoading(false);
+          },
+          (err) => {
+            console.error('Error listening to user profile:', err);
+            setError(err.message);
+            setLoading(false);
+          }
+        );
       } else {
+        // User is signed out
+        if (unsubscribeFirestore) {
+          unsubscribeFirestore();
+          unsubscribeFirestore = undefined;
+        }
         setUser(null);
-        setError(null);
+        setLoading(false);
       }
-      setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribeAuth();
+      if (unsubscribeFirestore) {
+        unsubscribeFirestore();
+      }
+    };
   }, []);
 
   return { user, loading, error };

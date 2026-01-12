@@ -2053,6 +2053,8 @@ PODS:
     - React-debug
   - react-native-safe-area-context (4.8.2):
     - React-Core
+  - react-native-voice (3.2.4):
+    - React-Core
   - React-nativeconfig (0.73.6)
   - React-NativeModulesApple (0.73.6):
     - glog
@@ -2248,9 +2250,16 @@ PODS:
     - glog
     - RCT-Folly (= 2022.05.16.00)
     - React-Core
+  - RNReanimated (3.6.3):
+    - glog
+    - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+    - ReactCommon/turbomodule/core
   - RNScreens (3.29.0):
     - glog
     - RCT-Folly (= 2022.05.16.00)
+    - React-Core
+  - RNSVG (14.1.0):
     - React-Core
   - RNVectorIcons (10.3.0):
     - glog
@@ -2299,6 +2308,7 @@ DEPENDENCIES:
   - React-logger (from `../node_modules/react-native/ReactCommon/logger`)
   - React-Mapbuffer (from `../node_modules/react-native/ReactCommon`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
+  - "react-native-voice (from `../node_modules/@react-native-voice/voice`)"
   - React-nativeconfig (from `../node_modules/react-native/ReactCommon`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-perflogger (from `../node_modules/react-native/ReactCommon/reactperflogger`)
@@ -2326,7 +2336,9 @@ DEPENDENCIES:
   - "RNFBFunctions (from `../node_modules/@react-native-firebase/functions`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
+  - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
+  - RNSVG (from `../node_modules/react-native-svg`)
   - RNVectorIcons (from `../node_modules/react-native-vector-icons`)
   - Yoga (from `../node_modules/react-native/ReactCommon/yoga`)
 
@@ -2435,6 +2447,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native/ReactCommon"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
+  react-native-voice:
+    :path: "../node_modules/@react-native-voice/voice"
   React-nativeconfig:
     :path: "../node_modules/react-native/ReactCommon"
   React-NativeModulesApple:
@@ -2489,8 +2503,12 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-firebase/messaging"
   RNGestureHandler:
     :path: "../node_modules/react-native-gesture-handler"
+  RNReanimated:
+    :path: "../node_modules/react-native-reanimated"
   RNScreens:
     :path: "../node_modules/react-native-screens"
+  RNSVG:
+    :path: "../node_modules/react-native-svg"
   RNVectorIcons:
     :path: "../node_modules/react-native-vector-icons"
   Yoga:
@@ -2559,6 +2577,7 @@ SPEC CHECKSUMS:
   React-logger: 55764cd993880c6f887505854581c9faf68feff2
   React-Mapbuffer: 0cc88310e28eba4f864893221b238ea3bdfd8a43
   react-native-safe-area-context: bf9d9d58f0f6726d4a6257088044c2595017579d
+  react-native-voice: 908a0eba96c8c3d643e4f98b7232c6557d0a6f9c
   React-nativeconfig: e700ac3ec3d66329076bd2c2787a204411815d43
   React-NativeModulesApple: eca91542f6d31ae0a929ad5eada8c6175f49bc0d
   React-perflogger: 5f49905de275bac07ac7ea7f575a70611fa988f2
@@ -2587,11 +2606,13 @@ SPEC CHECKSUMS:
   RNFBFunctions: 95b33bee73275b5cc497bb4262e5d57165b135ba
   RNFBMessaging: 92325b0d5619ac90ef023a23cfd16fd3b91d0a88
   RNGestureHandler: 758d382274dfcb9f791f90b2beff774d25e358ce
+  RNReanimated: aae10ea1f0f783e51646ec569babcd9ba3ad2dc9
   RNScreens: 1174f55dd2f72abe45a4e48bf20e552feb051600
+  RNSVG: 6d5ed33b6635ed6d6ecb50744dcf127580c39ed5
   RNVectorIcons: 4f6b99dc90099be8ef38dd7b65c6d2c398c650b1
   SocketRocket: f32cd54efbe0f095c4d7594881e52619cfe80b17
   Yoga: 805bf71192903b20fc14babe48080582fee65a80
 
-PODFILE CHECKSUM: 5d4aa153bf5f9dff24530c7e7ac7e1b70bdc790e
+PODFILE CHECKSUM: 5de73b0e1bf81b44ec274e27a453d64c650048a8
 
 COCOAPODS: 1.16.2

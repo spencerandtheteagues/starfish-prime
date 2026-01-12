@@ -1,15 +1,23 @@
+/*
+ * loggingEngine.ts
+ *
+ * Writes log events according to the configured logging level. Logging
+ * levels (0–3) define what kinds of events are persisted. This module
+ * abstracts writes to Firestore so that other modules can call
+ * logEvent() with an event object. Real implementation would filter
+ * events based on severity and category.
+ */
 import * as admin from 'firebase-admin';
 
-export async function logEvent(seniorId: string, logPayload: any, level: number) {
-  if (level === 0) return; // Level 0 is minimal, maybe no logging
-  
+export type LogEvent = {
+  seniorId: string;
+  type: string;
+  severity: number;
+  data: any;
+  timestamp: admin.firestore.Timestamp;
+};
+
+export async function logEvent(event: LogEvent) {
   const db = admin.firestore();
-  await db.collection('seniors').doc(seniorId).collection('logs').add({
-    timestamp: new Date().toISOString(),
-    category: logPayload.category || 'GENERAL',
-    severity: logPayload.severity || 1,
-    summary: logPayload.summary || 'No summary',
-    structured: logPayload.structured || {},
-    loggingLevel: level
-  });
+  await db.collection('logEvents').add(event);
 }

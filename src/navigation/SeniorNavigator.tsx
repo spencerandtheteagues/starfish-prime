@@ -16,6 +16,7 @@ import SeniorTodayScreen from '../screens/senior/SeniorTodayScreen';
 import SeniorContactsScreen from '../screens/senior/SeniorContactsScreen';
 import SeniorSOSScreen from '../screens/senior/SeniorSOSScreen';
 import BuddyChatScreen from '../screens/senior/BuddyChatScreen';
+import HealthChartsScreen from '../screens/senior/HealthChartsScreen';
 
 const Stack = createStackNavigator<SeniorStackParamList>();
 
@@ -34,6 +35,7 @@ const SeniorNavigator: React.FC = () => {
       <Stack.Screen name="SeniorContacts" component={SeniorContactsScreen} />
       <Stack.Screen name="SeniorSOS" component={SeniorSOSScreen} />
       <Stack.Screen name="BuddyChat" component={BuddyChatScreen} />
+      <Stack.Screen name="HealthCharts" component={HealthChartsScreen} />
     </Stack.Navigator>
   );
 };

@@ -1,0 +1,51 @@
+{
+  "product_modes": {
+    "BASIC": {
+      "allow_conversation": false,
+      "allow_memory": false,
+      "allow_reports": false,
+      "allow_internet": false
+    },
+    "BUDDY_PLUS": {
+      "allow_conversation": true,
+      "allow_memory": true,
+      "allow_reports": true,
+      "allow_internet": true
+    }
+  },
+  "logging_levels": {
+    "0": "Minimal",
+    "1": "Light",
+    "2": "Enhanced",
+    "3": "Safety-focused"
+  },
+  "retention_days_default": 90,
+  "quiet_hours_default": [
+    {
+      "start": "21:00",
+      "end": "07:00"
+    }
+  ],
+  "budgets": {
+    "buddy_plus": {
+      "daily_token_budget": 20000,
+      "daily_voice_minutes_budget": 20,
+      "monthly_report_generations": 1
+    }
+  },
+  "model_router": {
+    "providers": [
+      "anthropic",
+      "openai",
+      "google"
+    ],
+    "default_provider": "anthropic",
+    "fallback_order": [
+      "anthropic",
+      "openai",
+      "google"
+    ],
+    "cheap_model": "CHEAP_DEFAULT",
+    "premium_model": "PREMIUM_FOR_MONTHLY_REPORTS"
+  }
+}
