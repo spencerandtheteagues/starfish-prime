@@ -70,27 +70,6 @@ target 'ElderCare' do
         end
       end
     end
-
-    # Fix for BoringSSL-GRPC unsupported option -G
-    installer.pods_project.targets.each do |target|
-      if target.name == 'BoringSSL-GRPC'
-        target.source_build_phase.files.each do |file|
-          if file.settings && file.settings['COMPILER_FLAGS']
-            flags = file.settings['COMPILER_FLAGS'].split
-            flags.reject! { |flag| flag == '-GCC_WARN_INHIBIT_ALL_WARNINGS' }
-            file.settings['COMPILER_FLAGS'] = flags.join(' ')
-          end
-        end
-      end
-
-      # Fix for gRPC-Core and gRPC-C++ template errors with Xcode 16+
-      if target.name == 'gRPC-Core' || target.name == 'gRPC-C++'
-        target.build_configurations.each do |config|
-          config.build_settings['OTHER_CPLUSPLUSFLAGS'] ||= ['$(inherited)']
-          config.build_settings['OTHER_CPLUSPLUSFLAGS'] << '-Wno-missing-template-arg-list-after-template-kw'
-        end
-      end
-    end
   end
 
   post_integrate do |installer|

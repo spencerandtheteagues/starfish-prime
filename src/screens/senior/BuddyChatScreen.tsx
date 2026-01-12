@@ -14,19 +14,26 @@ import { useCurrentUser } from '../../state/useCurrentUser';
 import { SeniorColors } from '../../design/colors';
 import BuddyAvatar from '../../components/BuddyAvatar';
 
+interface Message {
+  role: 'user' | 'assistant';
+  content: string;
+}
+
+type Emotion = 'NEUTRAL' | 'HAPPY' | 'THINKING';
+
 /**
  * BuddyChatScreen (Senior)
  *
  * This screen provides a conversational interface between the senior and their AI buddy.
  */
 const BuddyChatScreen: React.FC = () => {
-  const [messages, setMessages] = useState<{ role: 'user' | 'assistant'; content: string }[]>([
-    { role: 'assistant', content: 'Hello! I'm your buddy. How are you feeling today?' },
+  const [messages, setMessages] = useState([
+    { role: 'assistant', content: 'Hello! I am your buddy. How are you feeling today?' },
   ]);
   const [isListening, setIsListening] = useState(false);
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [wakeListening, setWakeListening] = useState(true);
-  const [emotion, setEmotion] = useState<'NEUTRAL' | 'HAPPY' | 'THINKING'>('NEUTRAL');
+  const [emotion, setEmotion] = useState('NEUTRAL');
 
   const scrollViewRef = useRef<ScrollView>(null);
   const { user } = useCurrentUser();
@@ -37,7 +44,7 @@ const BuddyChatScreen: React.FC = () => {
     const speakIntro = async () => {
       setIsSpeaking(true);
       setEmotion('HAPPY');
-      await speakBuddyMessage('Hello! I'm your buddy. How are you feeling today?');
+      await speakBuddyMessage('Hello! I am your buddy. How are you feeling today?');
       setIsSpeaking(false);
       setEmotion('NEUTRAL');
     };
@@ -65,8 +72,8 @@ const BuddyChatScreen: React.FC = () => {
       await speakBuddyMessage(response);
     } catch (e) {
       console.warn('Chat error', e);
-      setMessages(prev => [...prev, { role: 'assistant', content: "I'm having trouble connecting right now. Please try again later." }]);
-      await speakBuddyMessage("I'm having trouble connecting right now. Please try again later.");
+      setMessages(prev => [...prev, { role: 'assistant', content: "I am having trouble connecting right now. Please try again later." }]);
+      await speakBuddyMessage("I am having trouble connecting right now. Please try again later.");
     } finally {
       setIsSpeaking(false);
       setEmotion('NEUTRAL');
