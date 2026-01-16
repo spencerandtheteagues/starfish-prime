@@ -1,7 +1,7 @@
 {
   "name": "silverguard-mcp-server",
-  "version": "1.0.0",
-  "description": "MCP Server for Silverguard Eldercare OpenAI Voice Integration",
+  "version": "2.0.0",
+  "description": "MCP Server for Silverguard Sunny AI Voice Integration with full eldercare tools",
   "main": "dist/index.js",
   "scripts": {
     "build": "tsc",
@@ -14,7 +14,8 @@
     "cors": "^2.8.5",
     "dotenv": "^16.3.1",
     "axios": "^1.6.2",
-    "zod": "^3.22.4"
+    "zod": "^3.22.4",
+    "firebase-admin": "^12.0.0"
   },
   "devDependencies": {
     "@types/express": "^4.17.21",

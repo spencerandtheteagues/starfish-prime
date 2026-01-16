@@ -1,0 +1,23 @@
+{"users": [
+{
+  "localId": "AzNotr7wOIcO4ZCUJm3Ff4ZK4zQ2",
+  "email": "spencerandtheteagues@gmail.com",
+  "emailVerified": false,
+  "passwordHash": "x2+JaWuzvUMv+tkrwqOWjsJn2TlpHoabLYUQBrISpKFcEaMMD5CBpC7MEYtruRDWxUOzptpiobhLYsQJCjRqFg==",
+  "salt": "D75q+yuQ0zJfNQ==",
+  "displayName": "Spencer Allen",
+  "lastSignedInAt": "1768173634945",
+  "createdAt": "1768173634945",
+  "providerUserInfo": []
+},
+{
+  "localId": "ZnERawO28MNSHtVk679O70LsUyJ3",
+  "email": "itsunderground@icloud.com",
+  "emailVerified": false,
+  "passwordHash": "9y01hNvQLKSZ0D90TgMYrhbhElOk/8Y3c9MJjm9i9+XjalSrnY+cmeHt85XFYMS2M6pLKhY0hv22dlqmMizsXA==",
+  "salt": "tz2Eyf0RcnXcmg==",
+  "displayName": "Spencer Teague",
+  "lastSignedInAt": "1768118591254",
+  "createdAt": "1768118591254",
+  "providerUserInfo": []
+}]}

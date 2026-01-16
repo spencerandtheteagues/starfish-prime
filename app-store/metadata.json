@@ -1,0 +1,80 @@
+{
+  "app_name": "SilverGuard - AI Elder Care",
+  "subtitle": "Voice AI Companion for Seniors",
+  "bundle_id": "com.silverguard.eldercare",
+  "version": "1.0.0",
+  "build_number": "1",
+  "category": {
+    "primary": "Health & Fitness",
+    "secondary": "Medical"
+  },
+  "content_rating": "4+",
+  "pricing": {
+    "app_unlock": {
+      "product_id": "com.silverguard.eldercare.unlock",
+      "price_usd": 4.99,
+      "description": "One-time purchase to unlock basic app features"
+    },
+    "premium_monthly": {
+      "product_id": "com.silverguard.eldercare.premium.monthly",
+      "price_usd": 19.99,
+      "billing_period": "monthly",
+      "free_trial_days": 3,
+      "description": "Premium subscription with Sunny AI companion"
+    },
+    "premium_yearly": {
+      "product_id": "com.silverguard.eldercare.premium.yearly",
+      "price_usd": 149.99,
+      "billing_period": "yearly",
+      "free_trial_days": 3,
+      "description": "Annual premium subscription - save 2 months"
+    }
+  },
+  "localization": {
+    "en-US": {
+      "name": "SilverGuard - AI Elder Care",
+      "subtitle": "Voice AI Companion for Seniors",
+      "description": "SilverGuard brings peace of mind to families caring for aging loved ones. Our AI companion, Sunny, provides 24/7 voice-activated support, medication reminders, and real-time updates to caregivers.\n\nFEATURES FOR SENIORS:\n• Talk to Sunny - A friendly AI companion available anytime\n• Voice-first design - No typing required\n• Medication reminders with voice confirmation\n• Simple, large-button interface\n• Emergency SOS with one tap\n• Stay connected with family messages\n\nFEATURES FOR CAREGIVERS:\n• Real-time dashboard with health insights\n• AI-generated daily wellness reports\n• Medication tracking and alerts\n• Appointment management\n• Instant emergency notifications\n• Privacy-first conversation summaries\n\nPREMIUM SUBSCRIPTION ($19.99/month):\n• Start with a 3-day FREE trial\n• Unlimited Sunny AI conversations\n• Advanced health analytics\n• Custom AI personality settings\n• Family sharing (up to 5 caregivers)\n• Export data and reports\n• Priority customer support\n\nPrivacy & Safety:\n• HIPAA-compliant data handling\n• End-to-end encrypted conversations\n• No conversation recordings stored\n• Senior-safe content filtering\n\nSilverGuard is designed with accessibility at its core, featuring WCAG AAA compliance, large touch targets, and screen reader support.\n\nSubscription automatically renews unless canceled at least 24 hours before the end of the current period. Manage subscriptions in Settings > Apple ID.",
+      "keywords": "eldercare,senior care,ai companion,caregiver,medication reminder,elderly,voice assistant,health tracking,family care,dementia,alzheimer,aging,wellness,safety",
+      "promotional_text": "Start your 3-day FREE trial today! Meet Sunny, your loved one's new AI companion.",
+      "whats_new": "Initial release of SilverGuard with Sunny AI companion, voice conversations, medication tracking, and caregiver dashboard."
+    }
+  },
+  "support_url": "https://silverguard.app/support",
+  "marketing_url": "https://silverguard.app",
+  "privacy_policy_url": "https://silverguard.app/privacy",
+  "terms_of_service_url": "https://silverguard.app/terms",
+  "copyright": "2024 SilverGuard Inc.",
+  "age_rating_declaration": {
+    "alcohol_tobacco_drugs": "NONE",
+    "contests": "NONE",
+    "gambling": "NONE",
+    "horror_fear": "NONE",
+    "mature_suggestive": "NONE",
+    "medical_treatment": "INFREQUENT_MILD",
+    "profanity_crude_humor": "NONE",
+    "sexual_content_nudity": "NONE",
+    "violence": "NONE",
+    "unrestricted_web_access": false,
+    "gambling_simulated": false,
+    "made_for_kids": false
+  },
+  "app_review_info": {
+    "demo_account_email": "demo@silverguard.app",
+    "demo_account_password": "ReviewDemo2024!",
+    "notes": "To test the full experience:\n1. Sign up as a Caregiver\n2. Create a senior profile\n3. Use the 'Senior View' toggle in settings\n4. Try talking to Sunny (requires microphone permission)\n5. Test the 3-day free trial flow"
+  },
+  "required_capabilities": [
+    "arm64"
+  ],
+  "minimum_ios_version": "15.0",
+  "permissions": {
+    "NSMicrophoneUsageDescription": "SilverGuard needs microphone access for voice conversations with Sunny, your AI companion.",
+    "NSLocationWhenInUseUsageDescription": "SilverGuard uses your location to provide weather updates and enable geofencing safety features.",
+    "NSCameraUsageDescription": "SilverGuard can use your camera to scan medication labels for easier tracking.",
+    "NSUserNotificationsUsageDescription": "SilverGuard sends notifications for medication reminders, appointments, and caregiver messages.",
+    "NSSpeechRecognitionUsageDescription": "SilverGuard uses speech recognition to understand voice commands and convert speech to text.",
+    "NSHealthShareUsageDescription": "SilverGuard can read health data from Apple Health to track wellness metrics.",
+    "NSHealthUpdateUsageDescription": "SilverGuard can save medication adherence data to Apple Health."
+  }
+}

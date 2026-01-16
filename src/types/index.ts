@@ -25,8 +25,10 @@ export interface User {
 // ============================================================================
 
 export type CognitiveLevel = 0 | 1 | 2 | 3;
+export type CognitiveBand = 'A' | 'B' | 'C' | 'D';
 export type Tone = 'formal' | 'friendly' | 'no_nonsense' | 'funny' | 'custom';
 export type CareTeamRole = 'admin' | 'editor' | 'viewer' | 'emergency_only';
+export type SubscriptionMode = 'BASIC' | 'BUDDY_PLUS';
 
 export interface SeniorProfile {
   id: string;
@@ -44,11 +46,11 @@ export interface SeniorProfile {
     level: CognitiveLevel;
     tone: Tone;
     customToneNotes?: string;
-    cognitiveBand?: 'A' | 'B' | 'C' | 'D'; // For integration package compatibility
+    cognitiveBand?: CognitiveBand; // For integration package compatibility
   };
 
   // Subscription and product mode
-  subscriptionMode?: 'BASIC' | 'BUDDY_PLUS';
+  subscriptionMode?: SubscriptionMode;
 
   // AI configuration
   aiConfig?: {
@@ -412,4 +414,81 @@ export type CaregiverStackParamList = {
   CognitiveSettings: undefined;
   NotificationSettings: undefined;
   PrivacySettings: undefined;
+
+  // Subscription
+  Subscription: undefined;
 };
+
+// ============================================================================
+// SUBSCRIPTION & PAYMENTS
+// ============================================================================
+
+export type SubscriptionTier = 'free' | 'basic' | 'premium';
+export type SubscriptionStatus = 'active' | 'canceled' | 'expired' | 'trial' | 'pending';
+export type PaymentProvider = 'apple' | 'stripe';
+
+export interface Subscription {
+  id: string;
+  userId: string;
+  seniorId?: string;
+  tier: SubscriptionTier;
+  status: SubscriptionStatus;
+  provider: PaymentProvider;
+
+  // Product info
+  productId: string;
+  originalTransactionId?: string;
+
+  // Timing
+  startDate: Date;
+  endDate: Date;
+  trialEndDate?: Date;
+
+  // Pricing
+  priceUsd: number;
+  currency: string;
+
+  // Auto-renewal
+  autoRenew: boolean;
+  canceledAt?: Date;
+  cancellationReason?: string;
+
+  // Metadata
+  createdAt: Date;
+  updatedAt: Date;
+}
+
+export interface SubscriptionProduct {
+  id: string;
+  productId: string; // App Store product ID
+  name: string;
+  description: string;
+  tier: SubscriptionTier;
+  priceUsd: number;
+  billingPeriod: 'monthly' | 'yearly' | 'lifetime';
+  features: string[];
+  popular?: boolean;
+}
+
+export interface PurchaseReceipt {
+  transactionId: string;
+  productId: string;
+  purchaseDate: Date;
+  expirationDate?: Date;
+  originalTransactionId: string;
+  receiptData: string;
+  verified: boolean;
+  verifiedAt?: Date;
+}
+
+// Feature flags based on subscription
+export interface SubscriptionFeatures {
+  maxSeniors: number;
+  voiceMinutesPerMonth: number;
+  sunnyAIEnabled: boolean;
+  advancedAnalytics: boolean;
+  prioritySupport: boolean;
+  customPrompts: boolean;
+  exportData: boolean;
+  familySharing: boolean;
+}
