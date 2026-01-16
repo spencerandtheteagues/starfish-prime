@@ -37,12 +37,15 @@ const MessagesListScreen: React.FC<MessagesListScreenProps> = ({ navigation }) =
       (doc) => {
         if (doc.exists) {
           const data = doc.data();
-          setThread({
-            id: doc.id,
-            ...data,
-            lastMessageAt: data.lastMessageAt?.toDate(),
-            createdAt: data.createdAt?.toDate(),
-          } as Thread);
+          if (data) {
+            setThread({
+              id: doc.id,
+              ...data,
+              lastMessageAt: data.lastMessageAt?.toDate?.(),
+              createdAt: data.createdAt?.toDate?.(),
+              updatedAt: data.updatedAt?.toDate?.(),
+            } as Thread);
+          }
         } else {
           // Thread doesn't exist yet (no messages sent)
           setThread(null);
@@ -98,9 +101,9 @@ const MessagesListScreen: React.FC<MessagesListScreenProps> = ({ navigation }) =
             >
               <View style={styles.avatarContainer}>
                 <Icon name="account-circle" size={56} color={FamilyColors.primary.purple} />
-                {thread.unreadCount > 0 && (
+                {user?.uid && thread.unreadCounts?.[user.uid] > 0 && (
                   <View style={styles.unreadBadge}>
-                    <Text style={styles.unreadText}>{thread.unreadCount}</Text>
+                    <Text style={styles.unreadText}>{thread.unreadCounts[user.uid]}</Text>
                   </View>
                 )}
               </View>
@@ -113,9 +116,9 @@ const MessagesListScreen: React.FC<MessagesListScreenProps> = ({ navigation }) =
                     </Text>
                   )}
                 </View>
-                {thread.lastMessage && (
+                {thread.lastMessagePreview && (
                   <Text style={styles.lastMessage} numberOfLines={2}>
-                    {thread.lastMessage}
+                    {thread.lastMessagePreview}
                   </Text>
                 )}
               </View>

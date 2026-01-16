@@ -38,19 +38,31 @@ const EditMedicationScreen: React.FC<EditMedicationScreenProps> = ({ navigation,
     const unsubscribe = medicationDoc(medicationId).onSnapshot(
       (doc) => {
         if (doc.exists) {
-          const data = doc.data() as Medication;
-          setMedication({ id: doc.id, ...data });
-          setName(data.name);
-          setDosage(data.dosage);
-          setInstructions(data.instructions || '');
-          setRequiresFood(data.requiresFood || false);
+          const data = doc.data();
+          const med: Medication = {
+            id: doc.id,
+            seniorId: data?.seniorId || '',
+            name: data?.name || '',
+            dosage: data?.dosage || '',
+            schedule: data?.schedule || { frequency: 'daily', times: [] },
+            instructions: data?.instructions,
+            requiresFood: data?.requiresFood,
+            isActive: data?.isActive ?? true,
+            createdAt: data?.createdAt?.toDate?.() || new Date(),
+            updatedAt: data?.updatedAt?.toDate?.() || new Date(),
+          };
+          setMedication(med);
+          setName(med.name);
+          setDosage(med.dosage);
+          setInstructions(med.instructions || '');
+          setRequiresFood(med.requiresFood || false);
 
           // Convert schedule times to Date objects
-          const scheduleTimes = data.schedule.times.map((t) => {
+          const scheduleTimes = (med.schedule?.times || []).map((t) => {
             const date = new Date(0, 0, 0, t.hour, t.minute);
             return date;
           });
-          setTimes(scheduleTimes);
+          setTimes(scheduleTimes.length > 0 ? scheduleTimes : [new Date(0, 0, 0, 8, 0)]);
         }
         setLoading(false);
       },

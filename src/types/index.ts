@@ -166,15 +166,28 @@ export interface Message {
 export type MedFrequency = 'daily' | 'twice-daily' | 'three-times-daily' | 'weekly' | 'as-needed';
 export type MedEventStatus = 'pending' | 'taken' | 'missed' | 'skipped';
 
+export interface MedicationScheduleTime {
+  hour: number;
+  minute: number;
+}
+
+export interface MedicationSchedule {
+  frequency: 'daily' | 'as_needed' | 'weekly';
+  times: MedicationScheduleTime[];
+}
+
 export interface Medication {
   id: string;
   seniorId: string;
   name: string;
   dosage: string;
-  frequency: MedFrequency;
-  reminderTimes: string[]; // ["09:00", "21:00"]
+  frequency?: MedFrequency; // Legacy field
+  reminderTimes?: string[]; // Legacy field ["09:00", "21:00"]
+  schedule: MedicationSchedule; // New structured schedule
   instructions?: string;
-  active: boolean;
+  requiresFood?: boolean;
+  active?: boolean;
+  isActive?: boolean; // Used in some places
   createdAt: Date;
   updatedAt: Date;
 }
@@ -375,6 +388,7 @@ export type SeniorStackParamList = {
   SeniorToday: undefined;
   SeniorContacts: undefined;
   SeniorSOS: undefined;
+  SeniorHealth: undefined;
   BuddyChat: undefined;
   HealthCharts: undefined;
 };
@@ -406,6 +420,7 @@ export type CaregiverStackParamList = {
   HealthCharts: { type: HealthLogType };
 
   // Messages
+  MessagesList: undefined;
   ChatThread: { threadId: string };
 
   // Settings

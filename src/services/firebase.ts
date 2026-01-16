@@ -60,6 +60,9 @@ export const messageDoc = (threadId: string, messageId: string) =>
 // Medications
 export const medsCollection = () => firebaseFirestore.collection('meds');
 export const medDoc = (medId: string) => medsCollection().doc(medId);
+// Aliases for backward compatibility
+export const medicationsCollection = medsCollection;
+export const medicationDoc = medDoc;
 
 // Medication Events
 export const medEventsCollection = () => firebaseFirestore.collection('medEvents');

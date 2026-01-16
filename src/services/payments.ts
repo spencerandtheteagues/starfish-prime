@@ -192,8 +192,8 @@ export async function fetchProducts(): Promise<InAppPurchases.IAPItemDetails[]> 
   try {
     const productIds = Object.values(PRODUCT_IDS);
     const { results } = await InAppPurchases.getProductsAsync(productIds);
-    console.log('[Payments] Fetched products:', results.length);
-    return results;
+    console.log('[Payments] Fetched products:', results?.length || 0);
+    return results || [];
   } catch (error) {
     console.error('[Payments] Failed to fetch products:', error);
     return [];

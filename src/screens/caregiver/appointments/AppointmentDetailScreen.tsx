@@ -28,14 +28,23 @@ const AppointmentDetailScreen: React.FC<AppointmentDetailScreenProps> = ({ navig
     const unsubscribe = appointmentDoc(appointmentId).onSnapshot(
       (doc) => {
         if (doc.exists) {
-          const data = doc.data() as Appointment;
+          const data = doc.data();
           setAppointment({
             id: doc.id,
-            ...data,
-            dateTime: data.dateTime?.toDate() || new Date(),
-            createdAt: data.createdAt?.toDate(),
-            updatedAt: data.updatedAt?.toDate(),
-          });
+            seniorId: data?.seniorId,
+            doctorName: data?.doctorName || '',
+            title: data?.title,
+            location: data?.location || '',
+            phone: data?.phone,
+            dateTime: data?.dateTime?.toDate?.() || new Date(),
+            duration: data?.duration || 60,
+            notes: data?.notes,
+            reminderEnabled: data?.reminderEnabled ?? true,
+            reminderTimes: data?.reminderTimes || [],
+            status: data?.status || 'upcoming',
+            createdAt: data?.createdAt?.toDate?.() || new Date(),
+            updatedAt: data?.updatedAt?.toDate?.() || new Date(),
+          } as Appointment);
         }
         setLoading(false);
       },

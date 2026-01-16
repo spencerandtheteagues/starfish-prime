@@ -58,7 +58,7 @@ const SeniorContactsScreen: React.FC<SeniorContactsScreenProps> = ({ navigation 
       setSelectedContact(contact);
     } else {
       // Call directly
-      makeCall(contact.phoneNumber);
+      makeCall(contact.phone || '');
     }
   };
 
@@ -68,31 +68,35 @@ const SeniorContactsScreen: React.FC<SeniorContactsScreenProps> = ({ navigation 
     setSelectedContact(null);
   };
 
-  const getContactIcon = (relationship: string): string => {
-    switch (relationship) {
+  const getContactIcon = (contactType: string): string => {
+    switch (contactType) {
       case 'family':
         return 'account-heart';
-      case 'friend':
+      case 'caregiver':
         return 'account-multiple';
       case 'doctor':
         return 'stethoscope';
       case 'emergency':
         return 'phone-alert';
+      case 'pharmacy':
+        return 'pill';
       default:
         return 'account';
     }
   };
 
-  const getContactColor = (relationship: string): string => {
-    switch (relationship) {
+  const getContactColor = (contactType: string): string => {
+    switch (contactType) {
       case 'family':
         return '#7C3AED';
-      case 'friend':
+      case 'caregiver':
         return '#059669';
       case 'doctor':
         return '#2563EB';
       case 'emergency':
         return '#DC2626';
+      case 'pharmacy':
+        return '#0891B2';
       default:
         return '#6B7280';
     }
@@ -123,8 +127,8 @@ const SeniorContactsScreen: React.FC<SeniorContactsScreenProps> = ({ navigation 
           </View>
         ) : (
           contacts.map((contact) => {
-            const iconName = getContactIcon(contact.relationship);
-            const color = getContactColor(contact.relationship);
+            const iconName = getContactIcon(contact.type);
+            const color = getContactColor(contact.type);
 
             return (
               <TouchableOpacity
@@ -139,7 +143,7 @@ const SeniorContactsScreen: React.FC<SeniorContactsScreenProps> = ({ navigation 
                       {contact.name}
                     </Text>
                     <Text style={[styles.contactRelationship, { fontSize: 20 * fontScale }]}>
-                      {contact.relationship.charAt(0).toUpperCase() + contact.relationship.slice(1)}
+                      {contact.type.charAt(0).toUpperCase() + contact.type.slice(1)}
                     </Text>
                   </View>
                   <Icon name="phone" size={40} color={color} />
@@ -169,9 +173,9 @@ const SeniorContactsScreen: React.FC<SeniorContactsScreenProps> = ({ navigation 
         <View style={styles.modalOverlay}>
           <View style={styles.modalContainer}>
             <Icon
-              name={getContactIcon(selectedContact?.relationship || 'other')}
+              name={getContactIcon(selectedContact?.type || 'other')}
               size={64}
-              color={getContactColor(selectedContact?.relationship || 'other')}
+              color={getContactColor(selectedContact?.type || 'other')}
             />
             <Text style={[styles.modalTitle, { fontSize: 32 * fontScale }]}>
               Calling {selectedContact?.name}
@@ -190,7 +194,7 @@ const SeniorContactsScreen: React.FC<SeniorContactsScreenProps> = ({ navigation 
 
             <TouchableOpacity
               style={styles.callNowButton}
-              onPress={() => makeCall(selectedContact?.phoneNumber || '')}
+              onPress={() => makeCall(selectedContact?.phone || '')}
             >
               <Icon name="phone" size={32} color="#FFFFFF" />
               <Text style={[styles.callNowText, { fontSize: 28 * fontScale }]}>

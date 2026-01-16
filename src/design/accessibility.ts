@@ -5,7 +5,7 @@
  * Designed for elderly users with varying abilities
  */
 
-import { Dimensions, Platform, AccessibilityInfo, Vibration } from 'react-native';
+import { Dimensions, Platform, AccessibilityInfo, Vibration, AccessibilityRole } from 'react-native';
 import * as Haptics from 'expo-haptics';
 
 const { width: SCREEN_WIDTH, height: SCREEN_HEIGHT } = Dimensions.get('window');
@@ -172,17 +172,17 @@ export const scaledTouchTarget = (baseSize: number): number => {
 /**
  * Get accessibility role for React Native
  */
-export const getAccessibilityRole = (type: string): string => {
-  const roles: Record<string, string> = {
+export const getAccessibilityRole = (type: string): AccessibilityRole => {
+  const roles: Record<string, AccessibilityRole> = {
     button: 'button',
     link: 'link',
     image: 'image',
     text: 'text',
     heading: 'header',
     list: 'list',
-    listItem: 'listitem',
+    listItem: 'none',
     checkbox: 'checkbox',
-    radio: 'radiobutton',
+    radio: 'radio',
     switch: 'switch',
     alert: 'alert',
     progressbar: 'progressbar',
@@ -197,7 +197,7 @@ export interface AccessibilityProps {
   accessible: boolean;
   accessibilityLabel: string;
   accessibilityHint?: string;
-  accessibilityRole: string;
+  accessibilityRole: AccessibilityRole;
   accessibilityState?: {
     selected?: boolean;
     disabled?: boolean;

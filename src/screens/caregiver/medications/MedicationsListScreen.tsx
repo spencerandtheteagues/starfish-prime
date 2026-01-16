@@ -11,7 +11,7 @@ import { CaregiverStackParamList, Medication } from '../../../types';
 import { useCurrentUser } from '../../../state/useCurrentUser';
 import { useSeniorProfile } from '../../../state/useSeniorProfile';
 import { medicationsCollection, medicationDoc } from '../../../services/firebase';
-import { formatTime } from '../../../utils/date';
+import { formatScheduleTime } from '../../../utils/date';
 import { FamilyColors } from '../../../design/colors';
 import EmptyState from '../../../components/common/EmptyState';
 import LoadingSpinner from '../../../components/common/LoadingSpinner';
@@ -78,7 +78,7 @@ const MedicationsListScreen: React.FC<MedicationsListScreenProps> = ({ navigatio
   };
 
   const renderMedication = ({ item }: { item: Medication }) => {
-    const scheduleText = item.schedule.times.map((t) => formatTime(t)).join(', ');
+    const scheduleText = item.schedule?.times?.map((t) => formatScheduleTime(t)).join(', ') || 'No schedule';
 
     return (
       <TouchableOpacity

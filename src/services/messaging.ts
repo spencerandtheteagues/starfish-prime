@@ -13,6 +13,9 @@ import {
 } from './firebase';
 import { Thread, Message, MessageSenderRole, MessageUrgency } from '../types';
 
+// Re-export for convenience
+export { threadIdForSenior } from './firebase';
+
 // ============================================================================
 // CREATE OR GET THREAD
 // ============================================================================

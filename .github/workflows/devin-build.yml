@@ -1,0 +1,53 @@
+name: Trigger Devin Build
+
+on:
+  workflow_dispatch:
+    inputs:
+      task:
+        description: 'Task for Devin to execute'
+        required: true
+        default: 'Build production-ready SilverGuard ElderCare app following PRODUCTION_BUILD_SCRIPT.md. Test all 30 acceptance criteria. Deliver App Store ready IPA.'
+        type: string
+  push:
+    branches:
+      - main
+    paths:
+      - 'PRODUCTION_BUILD_SCRIPT.md'
+
+jobs:
+  trigger-devin:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Get changed files
+        id: changed-files
+        uses: tj-actions/changed-files@v44
+        with:
+          json: true
+
+      - name: Trigger Devin Session
+        env:
+          DEVIN_API_KEY: ${{ secrets.DEVIN_API_KEY }}
+        run: |
+          curl -X POST "https://api.devin.ai/v1/sessions" \
+            -H "Authorization: Bearer $DEVIN_API_KEY" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "prompt": "${{ github.event.inputs.task || 'Build production-ready SilverGuard ElderCare app. Follow PRODUCTION_BUILD_SCRIPT.md exactly. Test all 30 acceptance criteria. Deliver App Store ready build.' }}",
+              "repo_url": "https://github.com/${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "context": {
+                "files_changed": ${{ steps.changed-files.outputs.all_changed_files }},
+                "commit_sha": "${{ github.sha }}",
+                "documentation": "PRODUCTION_BUILD_SCRIPT.md contains all requirements"
+              }
+            }'
+
+      - name: Output Session Info
+        run: |
+          echo "Devin session triggered for SilverGuard ElderCare build"
+          echo "Repository: ${{ github.repository }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Check Devin dashboard for session status"

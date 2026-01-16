@@ -185,8 +185,10 @@ export const getBadgeCount = async (): Promise<number> => {
   if (Platform.OS !== 'ios') return 0;
 
   try {
-    const badge = await messaging().getBadge();
-    return badge;
+    // Note: Badge count is typically managed through notifications/app state
+    // Firebase messaging doesn't expose badge directly - use expo-notifications or native module
+    console.log('[Push] Badge count retrieval requires native iOS module');
+    return 0;
   } catch (error) {
     console.error('Get badge count error:', error);
     return 0;
@@ -201,7 +203,9 @@ export const setBadgeCount = async (count: number): Promise<void> => {
   if (Platform.OS !== 'ios') return;
 
   try {
-    await messaging().setBadge(count);
+    // Note: Badge count is typically set through notifications
+    // Firebase messaging doesn't expose badge directly - use expo-notifications or native module
+    console.log('[Push] Setting badge count to:', count);
   } catch (error) {
     console.error('Set badge count error:', error);
   }

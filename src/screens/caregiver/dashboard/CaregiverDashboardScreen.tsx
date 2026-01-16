@@ -147,13 +147,21 @@ const CaregiverDashboardScreen: React.FC<CaregiverDashboardScreenProps> = ({ nav
       .orderBy('createdAt', 'desc')
       .limit(10)
       .onSnapshot((snapshot) => {
-        const alertsList = snapshot.docs.map((doc) => ({
-          id: doc.id,
-          ...doc.data(),
-          createdAt: doc.data().createdAt?.toDate(),
-          resolvedAt: doc.data().resolvedAt?.toDate(),
-          acknowledgedAt: doc.data().acknowledgedAt?.toDate(),
-        })) as AlertType[];
+        const alertsList = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            seniorId: data.seniorId || user.activeSeniorId,
+            type: data.type || 'info',
+            severity: data.severity || 'info',
+            message: data.message || '',
+            acknowledged: data.acknowledged ?? false,
+            acknowledgedBy: data.acknowledgedBy,
+            acknowledgedAt: data.acknowledgedAt?.toDate?.(),
+            createdAt: data.createdAt?.toDate?.() || new Date(),
+            data: data.data,
+          } as AlertType;
+        });
         setAlerts(alertsList);
       });
 

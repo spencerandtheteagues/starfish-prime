@@ -43,13 +43,19 @@ const MedicationHistoryScreen: React.FC<MedicationHistoryScreenProps> = ({ navig
       .limit(100)
       .onSnapshot(
         (snapshot) => {
-          const eventsData = snapshot.docs.map((doc) => ({
-            id: doc.id,
-            ...doc.data(),
-            scheduledTime: doc.data().scheduledTime?.toDate(),
-            takenAt: doc.data().takenAt?.toDate(),
-            createdAt: doc.data().createdAt?.toDate(),
-          })) as MedicationEvent[];
+          const eventsData = snapshot.docs.map((doc) => {
+            const data = doc.data();
+            return {
+              id: doc.id,
+              seniorId: data.seniorId || user?.activeSeniorId || '',
+              medicationId: data.medicationId || '',
+              medicationName: data.medicationName || '',
+              scheduledTime: data.scheduledTime?.toDate?.() || new Date(),
+              takenAt: data.takenAt?.toDate?.(),
+              status: data.status || 'pending',
+              notes: data.notes,
+            } as MedicationEvent;
+          });
           setEvents(eventsData);
           setLoading(false);
         },

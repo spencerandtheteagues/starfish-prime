@@ -53,7 +53,7 @@ const MedicationsStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="MedicationsList" component={MedicationsListScreen} />
     <Stack.Screen name="AddMedication" component={AddMedicationScreen} />
-    <Stack.Screen name="EditMedication" component={EditMedicationScreen} />
+    <Stack.Screen name="EditMedication" component={EditMedicationScreen as any} />
     <Stack.Screen name="MedicationHistory" component={MedicationHistoryScreen} />
   </Stack.Navigator>
 );
@@ -62,22 +62,22 @@ const AppointmentsStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="AppointmentsList" component={AppointmentsListScreen} />
     <Stack.Screen name="AddAppointment" component={AddAppointmentScreen} />
-    <Stack.Screen name="EditAppointment" component={EditAppointmentScreen} />
-    <Stack.Screen name="AppointmentDetail" component={AppointmentDetailScreen} />
+    <Stack.Screen name="EditAppointment" component={EditAppointmentScreen as any} />
+    <Stack.Screen name="AppointmentDetail" component={AppointmentDetailScreen as any} />
   </Stack.Navigator>
 );
 
 const HealthStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="HealthDashboard" component={HealthDashboardScreen} />
-    <Stack.Screen name="HealthCharts" component={HealthChartsScreen} />
+    <Stack.Screen name="HealthCharts" component={HealthChartsScreen as any} />
   </Stack.Navigator>
 );
 
 const MessagesStack = () => (
   <Stack.Navigator screenOptions={{ headerShown: false }}>
     <Stack.Screen name="MessagesList" component={MessagesListScreen} />
-    <Stack.Screen name="ChatThread" component={ChatThreadScreen} />
+    <Stack.Screen name="ChatThread" component={ChatThreadScreen as any} />
   </Stack.Navigator>
 );
 

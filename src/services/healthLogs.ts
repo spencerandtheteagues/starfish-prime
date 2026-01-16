@@ -6,6 +6,9 @@
 import { firebaseFirestore } from './firebase';
 import { HealthLog, HealthLogType } from '../types';
 
+// Re-export types for convenience
+export { HealthLog, HealthLogType } from '../types';
+
 // ============================================================================
 // HEALTH LOG CRUD OPERATIONS
 // ============================================================================

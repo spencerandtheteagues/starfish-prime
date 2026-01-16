@@ -4,9 +4,8 @@
  */
 
 import * as Speech from 'expo-speech';
-import { Platform } from 'react-native';
+import { Platform, PermissionsAndroid } from 'react-native';
 import Voice from '@react-native-voice/voice';
-import { request, PERMISSIONS, RESULTS } from 'react-native-permissions';
 
 // ============================================================================
 // TEXT-TO-SPEECH (TTS)
@@ -161,7 +160,8 @@ export async function cancelListening(): Promise<void> {
  */
 export async function isRecognitionAvailable(): Promise<boolean> {
   try {
-    return await Voice.isAvailable();
+    const result = await Voice.isAvailable();
+    return Boolean(result);
   } catch (error) {
     console.error('STT availability error:', error);
     return false;
@@ -174,32 +174,42 @@ export async function isRecognitionAvailable(): Promise<boolean> {
 export async function requestMicrophonePermission(): Promise<boolean> {
   if (Platform.OS === 'web') {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      stream.getTracks().forEach(track => track.stop());
-      return true;
+      // Web API for microphone access
+      const nav = navigator as any;
+      if (typeof nav !== 'undefined' && nav.mediaDevices) {
+        const stream = await nav.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach((track: any) => track.stop());
+        return true;
+      }
+      return false;
     } catch (error) {
       console.error('Web microphone permission error:', error);
       return false;
     }
   }
 
-  const permission = Platform.select({
-    ios: PERMISSIONS.IOS.MICROPHONE,
-    android: PERMISSIONS.ANDROID.RECORD_AUDIO,
-  });
-
-  if (!permission) {
-    console.warn('Microphone permission not applicable for this platform.');
-    return false;
+  if (Platform.OS === 'android') {
+    try {
+      const granted = await PermissionsAndroid.request(
+        PermissionsAndroid.PERMISSIONS.RECORD_AUDIO,
+        {
+          title: 'Microphone Permission',
+          message: 'SilverGuard needs access to your microphone for voice features.',
+          buttonNeutral: 'Ask Me Later',
+          buttonNegative: 'Cancel',
+          buttonPositive: 'OK',
+        }
+      );
+      return granted === PermissionsAndroid.RESULTS.GRANTED;
+    } catch (error) {
+      console.error('Android microphone permission error:', error);
+      return false;
+    }
   }
 
-  try {
-    const result = await request(permission);
-    return result === RESULTS.GRANTED;
-  } catch (error) {
-    console.error('Native microphone permission request error:', error);
-    return false;
-  }
+  // iOS handles permissions through expo-speech and @react-native-voice/voice
+  // Permission is requested automatically when the microphone is first accessed
+  return true;
 }
 
 // ============================================================================

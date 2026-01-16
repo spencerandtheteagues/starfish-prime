@@ -1,0 +1,43 @@
+{
+  "name": "SilverGuard ElderCare",
+  "description": "Production-ready eldercare app with Sunny AI voice assistant",
+  "repository": "https://github.com/spencerandtheteagues/Silverguard-Eldercare",
+  "defaultBranch": "main",
+  "buildCommand": "npm install && cd functions && npm install && npm run build && cd ..",
+  "testCommand": "npx tsc --noEmit",
+  "deployCommand": "firebase deploy --only functions",
+  "environment": {
+    "NODE_VERSION": "20",
+    "EXPO_SDK_VERSION": "50"
+  },
+  "tasks": {
+    "build": {
+      "description": "Build the complete SilverGuard ElderCare app for App Store submission",
+      "steps": [
+        "Install all dependencies (npm install)",
+        "Build Cloud Functions (cd functions && npm run build)",
+        "Run TypeScript checks (npx tsc --noEmit)",
+        "Generate iOS build (npx expo prebuild --platform ios)",
+        "Install CocoaPods (cd ios && pod install)",
+        "Create Xcode archive for App Store",
+        "Test all 30 acceptance criteria from PRODUCTION_BUILD_SCRIPT.md",
+        "Generate App Store screenshots",
+        "Prepare TestFlight build"
+      ],
+      "successCriteria": [
+        "App launches without crash",
+        "Sunny voice chat connects and responds",
+        "All 7 Sunny functions execute without error",
+        "SOS button triggers emergency alert",
+        "Subscription flow completes",
+        "VoiceOver accessibility works",
+        "No console errors in production build"
+      ]
+    }
+  },
+  "documentation": {
+    "mainSpec": "PRODUCTION_BUILD_SCRIPT.md",
+    "readme": "README.md",
+    "appStore": "app-store/submission-checklist.md"
+  }
+}

@@ -39,14 +39,30 @@ const EditAppointmentScreen: React.FC<EditAppointmentScreenProps> = ({ navigatio
     const unsubscribe = appointmentDoc(appointmentId).onSnapshot(
       (doc) => {
         if (doc.exists) {
-          const data = doc.data() as Appointment;
-          const appt = { id: doc.id, ...data, dateTime: data.dateTime?.toDate() || new Date() };
+          const data = doc.data();
+          const dateTimeValue = data?.dateTime?.toDate?.() || new Date();
+          const appt: Appointment = {
+            id: doc.id,
+            seniorId: data?.seniorId || '',
+            doctorName: data?.doctorName || '',
+            title: data?.title || '',
+            location: data?.location || '',
+            phone: data?.phone,
+            dateTime: dateTimeValue,
+            duration: data?.duration || 60,
+            notes: data?.notes,
+            reminderEnabled: data?.reminderEnabled ?? true,
+            reminderTimes: data?.reminderTimes || [],
+            status: data?.status || 'upcoming',
+            createdAt: data?.createdAt?.toDate?.() || new Date(),
+            updatedAt: data?.updatedAt?.toDate?.() || new Date(),
+          };
           setAppointment(appt);
-          setTitle(data.title);
-          setLocation(data.location || '');
-          setPhone(data.phone || '');
-          setNotes(data.notes || '');
-          setDateTime(appt.dateTime);
+          setTitle(appt.title || '');
+          setLocation(appt.location || '');
+          setPhone(appt.phone || '');
+          setNotes(appt.notes || '');
+          setDateTime(dateTimeValue);
         }
         setLoading(false);
       },

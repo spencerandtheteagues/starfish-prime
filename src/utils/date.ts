@@ -112,6 +112,20 @@ export const formatMedicationTime = (timeString: string): string => {
 };
 
 /**
+ * Format schedule time object ({ hour, minute }) to display string
+ */
+export const formatScheduleTime = (time: { hour: number; minute: number }): string => {
+  try {
+    const date = new Date();
+    date.setHours(time.hour, time.minute, 0, 0);
+    return format(date, 'h:mm a');
+  } catch (error) {
+    console.error('Error formatting schedule time:', error);
+    return `${time.hour}:${time.minute.toString().padStart(2, '0')}`;
+  }
+};
+
+/**
  * Check if date is in the past
  */
 export const isPast = (date: Date | string): boolean => {
@@ -163,6 +177,7 @@ export default {
   formatDateWithContext,
   formatActivityTime,
   formatMedicationTime,
+  formatScheduleTime,
   isPast,
   isFuture,
   getStartOfDay,

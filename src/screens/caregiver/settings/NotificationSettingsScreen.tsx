@@ -66,7 +66,7 @@ const NotificationSettingsScreen: React.FC<NotificationSettingsScreenProps> = ({
       setPreferences({
         medicationReminders: senior.preferences.notifications.medicationReminders ?? true,
         missedMedications: senior.preferences.notifications.missedMedications ?? true,
-        upcomingAppointments: senior.preferences.notifications.upcomingAppointments ?? true,
+        upcomingAppointments: senior.preferences.notifications.appointments ?? true,
         healthAlerts: senior.preferences.notifications.healthAlerts ?? true,
         messages: senior.preferences.notifications.messages ?? true,
         sosAlerts: true, // Always on

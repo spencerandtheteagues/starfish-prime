@@ -107,6 +107,9 @@ export const FamilyColors = {
     purpleDark: '#5B21B6',  // Darker purple
     purpleLight: '#A78BFA', // Lighter purple
     purpleBackground: '#F5F3FF', // Very light purple
+    blue: '#3B82F6',        // Accent blue for charts/secondary elements
+    blueDark: '#2563EB',    // Dark blue
+    blueLight: '#60A5FA',   // Light blue
   },
 
   // Semantic Colors
